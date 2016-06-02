@@ -8,9 +8,9 @@ go get -u -v github.com/beego/i18n
 
 go get -u -v github.com/go-sql-driver/mysql
 
-go get -u -v github.com/go-xorm/xorm
-
 go get -u  v github.com/jinzhu/gorm
+
+go get -u -v github.com/go-xorm/xorm
 
 #开发工具
 
