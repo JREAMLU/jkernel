@@ -8,7 +8,7 @@
 package routers
 
 import (
-	"base/controllers"
+	"github.com/JREAMLU/jkernel/base/controllers"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"

@@ -6,7 +6,7 @@ import (
 	"hash/crc32"
 	"hash/crc64"
 
-	"core/global"
+	"github.com/JREAMLU/core/global"
 )
 
 type LongController struct {

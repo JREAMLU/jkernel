@@ -1,8 +1,8 @@
 package main
 
 import (
-	_ "base/docs"
-	_ "base/routers"
+	_ "github.com/JREAMLU/jkernel/base/docs"
+	_ "github.com/JREAMLU/jkernel/base/routers"
 
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"

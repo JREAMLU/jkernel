@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"core/global"
 	"fmt"
 
+	"github.com/JREAMLU/core/global"
 	//"github.com/astaxie/beego/validation"
 )
 

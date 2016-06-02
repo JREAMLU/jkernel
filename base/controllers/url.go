@@ -1,11 +1,10 @@
 package controllers
 
 import (
-	"base/services"
-	"core/global"
+	"github.com/JREAMLU/core/global"
+	"github.com/JREAMLU/jkernel/base/services"
 
 	"github.com/astaxie/beego"
-
 	//"encoding/json"
 )
 
