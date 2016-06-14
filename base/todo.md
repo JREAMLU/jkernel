@@ -54,7 +54,7 @@ test
 返回201 								√
 签名验证
 7.日志
-	基于队列 RabbitMQ
+	基于队列 Kakfa
 	MongoDB
 8.错误页面
 9.代码提示 							√
@@ -62,30 +62,37 @@ test
 11.ffjson							√
 
 go:
-	sublime 配置保存 	//
-	i18n 	//
-	参数的验证 	//
-	meta验证
-		路由获取version 	//框架受限制
-		把meta参数放入新的struct 返回 	//
-	错误err 	//
-	返回值封装 	//
-		meta信息中的requestid 	错误时也返回requestid 	//
-			map检查key是否存在 							//
-			input 返回值改成 2个返回 					//
+	todo
+		logs
+			Kakfa->MongoDB
+			封装kafak
+		
+		签名验证 
+		思考request_id
 
-		路由匹配配置化 		//
-		core单独移出 	 	//	
-			目录结构变化 	//
-	content-type判断 		//
-	nginx环境下header 下划线_格式bug 					//
-	mysql
-		gorm
-	redis
-	logs
-	test
-	返回201 											//
-	调用api方法封装
-	部署 												//
-	签名验证 
-	思考request_id
+	已完成
+		sublime 配置保存 	//
+		i18n 	//
+		参数的验证 	//
+		meta验证
+			路由获取version 	//框架受限制
+			把meta参数放入新的struct 返回 	//
+		错误err 	//
+		返回值封装 	//
+			meta信息中的requestid 	错误时也返回requestid 	//
+				map检查key是否存在 							//
+				input 返回值改成 2个返回 					//
+
+			路由匹配配置化 		//
+			core单独移出 	 	//	
+				目录结构变化 	//
+		content-type判断 		//
+		nginx环境下header 下划线_格式bug 					//
+		mysql 							//
+			gorm 							//
+		redis 							//
+		test 						//
+		返回201 											//
+		调用api方法封装 								//
+		部署 												//
+		
