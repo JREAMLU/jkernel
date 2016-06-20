@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "github.com/JREAMLU/jkernel/base/docs"
 	_ "github.com/JREAMLU/jkernel/base/routers"
 
 	"github.com/astaxie/beego"
