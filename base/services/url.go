@@ -146,15 +146,40 @@ func Serialize(data interface{}) interface{} {
 		return str
 	case reflect.Map:
 		s := reflect.ValueOf(data)
-		fmt.Println("sssssss", s)
+
+		//ksort
+		// sorted_keys := make([]string, 0)
+		// for k, _ := range rdata {
+		// 	sorted_keys = append(sorted_keys, k)
+		// }
+		// sort.Strings(sorted_keys)
+		// for _, k := range sorted_keys {
+		// 	fmt.Printf("k=%v, v=%v\n", k, rdata[k])
+		// 	str = str + k + rdata[k]
+		// }
+
 		keys := s.MapKeys()
+		//ksort
+		sorted_keys := make([]string, 0)
 		for _, key := range keys {
-			serial := Serialize(s.MapIndex(reflect.ValueOf(key.String())).Interface())
+			sorted_keys = append(sorted_keys, key.Interface().(string))
+		}
+		sort.Strings(sorted_keys)
+		for _, key := range sorted_keys {
+			serial := Serialize(s.MapIndex(reflect.ValueOf(key)).Interface())
 			if reflect.TypeOf(serial).Kind() == reflect.Float64 {
 				serial = strconv.Itoa(int(serial.(float64)))
 			}
-			str = str + key.String() + serial.(string)
+			str = str + key + serial.(string)
 		}
+		//     for _, key := range keys {
+		//         serial := Serialize(s.MapIndex(reflect.ValueOf(key.String())).Interface(), true)
+		//         if reflect.TypeOf(serial).Kind() == reflect.Float64 {
+		//             serial = strconv.Itoa(int(serial.(float64)))
+		//         }
+		//         str = str + key.String() + serial.(string)
+		//     }
+		// }
 		return str
 	}
 
@@ -168,5 +193,4 @@ func Serialize(data interface{}) interface{} {
 	// 	}
 	// }
 	return data
-
 }
