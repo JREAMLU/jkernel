@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/astaxie/beego"
@@ -17,6 +15,7 @@ type Url struct {
 type DataParams struct {
 	Urls      []UrlsParams `json:"urls" valid:"Required"`
 	Timestamp int64        `json:"timestamp" valid:"Required"`
+	Sign      string       `json:"sign" valid:"Required"`
 }
 
 type UrlsParams struct {
@@ -48,15 +47,13 @@ func (r *Url) Valid(v *validation.Validation) {}
  */
 func (r *Url) GoShorten(rawMetaHeader map[string][]string, rawDataBody []byte) (httpStatus int, output interface{}) {
 	//将传递过来多json raw解析到struct
-	var u Url
-	ffjson.Unmarshal(rawDataBody, &u)
-	// ffjson.Unmarshal(rawDataBody, &u.Data.Urls)
+	ffjson.Unmarshal(rawDataBody, r)
 
 	//日志
-	fmt.Println("Url json解析:", u)
+	beego.Trace("Url json解析:", r)
 
 	//参数验证
-	checked, err := inout.InputParamsCheck(rawMetaHeader, &u.Data)
+	checked, err := inout.InputParamsCheck(rawMetaHeader, rawDataBody, &r.Data)
 	if err != nil {
 		return inout.EXPECTATION_FAILED, inout.OutputFail(checked.Message, "DATAPARAMSILLEGAL", checked.RequestID)
 	}
@@ -65,7 +62,7 @@ func (r *Url) GoShorten(rawMetaHeader map[string][]string, rawDataBody []byte) (
 	var list = make(map[string]interface{})
 	var params_map = make(map[string]interface{})
 	params := []map[string]interface{}{}
-	for _, val := range u.Data.Urls {
+	for _, val := range r.Data.Urls {
 		shortUrl := atom.GetShortenUrl(val.LongUrl, beego.AppConfig.String("ShortenDomain"))
 		list[val.LongUrl] = shortUrl
 
