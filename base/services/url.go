@@ -1,6 +1,10 @@
 package services
 
 import (
+	"fmt"
+	"time"
+
+	"github.com/JREAMLU/core/async"
 	"github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/astaxie/beego"
@@ -81,6 +85,27 @@ func (r *Url) GoShorten(rawMetaHeader map[string][]string, rawDataBody []byte) (
 	var data dataList
 	data.List = list
 	data.Total = len(list)
+
+	//请求其他接口
+	var requestParams = make(map[string]interface{})
+	var rdata = make(map[string]interface{})
+	var urls []map[string]string
+	timestamp := time.Now().Unix()
+	urls = append(urls, map[string]string{"long_url": "http://o9d.cn", "IP": "127.0.0.1"})
+	urls = append(urls, map[string]string{"long_url": "http://huiyimei.net", "IP": "192.168.1.1"})
+	rdata["urls"] = urls
+	rdata["timestamp"] = timestamp
+	requestParams["data"] = rdata
+	// atom.RequestGetAyiName(requestParams, timestamp)
+
+	var addFunc async.MultiAddFunc
+	addFunc = append(addFunc, async.AddFunc{Name: "a", Handler: atom.RequestGetAyiName, Params: []interface{}{requestParams, timestamp}})
+	addFunc = append(addFunc, async.AddFunc{Name: "b", Handler: atom.RequestGetAyiName, Params: []interface{}{requestParams, timestamp}})
+
+	res, err := async.GoAsyncRequest(addFunc, 2)
+	fmt.Println(res, err)
+	fmt.Println("=================================", res["a"][0])
+	fmt.Println("=================================", res["b"][0])
 
 	//持久化到mysql
 
