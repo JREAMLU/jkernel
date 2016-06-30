@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"github.com/JREAMLU/core/global"
+	"github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/services"
-
-	"github.com/astaxie/beego"
-	//"encoding/json"
 )
 
 type UrlController struct {
@@ -48,14 +46,10 @@ DATA:
  *	@todo 			参数验证, 封装返回
  */
 func (r *UrlController) GoShorten() {
-	//入参 meta data
-	rawMetaHeader := r.Ctx.Input.Context.Request.Header
-	rawDataBody := r.Ctx.Input.RequestBody
+	//input params
+	rawMetaHeader, rawDataBody := inout.InputParams(r.Ctx.Input)
 
-	//记录参数日志
-	beego.Trace("入参body:" + string(rawDataBody))
-
-	//调用servcie方法, 将参数传递过去
+	//service
 	var service services.Url
 	httpStatus, shorten := service.GoShorten(rawMetaHeader, rawDataBody)
 
