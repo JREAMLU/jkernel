@@ -1,11 +1,13 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/JREAMLU/core/async"
 	"github.com/JREAMLU/core/inout"
+	"github.com/JREAMLU/core/sign"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
@@ -96,11 +98,36 @@ func (r *Url) GoShorten(rawMetaHeader map[string][]string, rawDataBody []byte) (
 	rdata["urls"] = urls
 	rdata["timestamp"] = timestamp
 	requestParams["data"] = rdata
+	raw, _ := json.Marshal(requestParams)
+	sign := sign.GenerateSign(raw, timestamp, beego.AppConfig.String("sign.secretKey"))
+	requestParams["sign"] = sign
 	// atom.RequestGetAyiName(requestParams, timestamp)
 
 	var addFunc async.MultiAddFunc
-	addFunc = append(addFunc, async.AddFunc{Name: "a", Handler: atom.RequestGetAyiName, Params: []interface{}{requestParams, timestamp}})
-	addFunc = append(addFunc, async.AddFunc{Name: "b", Handler: atom.RequestGetAyiName, Params: []interface{}{requestParams, timestamp}})
+	addFunc = append(
+		addFunc,
+		async.AddFunc{
+			Name:    "a",
+			Handler: atom.RequestGetAyiName,
+			Params: []interface{}{
+				requestParams,
+				timestamp,
+				checked.MetaCheckResult["Request-Id"],
+			},
+		},
+	)
+	addFunc = append(
+		addFunc,
+		async.AddFunc{
+			Name:    "b",
+			Handler: atom.RequestGetAyiName,
+			Params: []interface{}{
+				requestParams,
+				timestamp,
+				checked.MetaCheckResult["Request-Id"],
+			},
+		},
+	)
 
 	res, err := async.GoAsyncRequest(addFunc, 2)
 	fmt.Println(res, err)
