@@ -131,8 +131,8 @@ func (r *Url) GoShorten(rawMetaHeader map[string][]string, rawDataBody []byte) (
 
 	res, err := async.GoAsyncRequest(addFunc, 2)
 	fmt.Println(res, err)
-	fmt.Println("=================================", res["a"][0])
-	fmt.Println("=================================", res["b"][0])
+	fmt.Println("=================================", "res: ", res["a"][0], "err: ", res["a"][1])
+	fmt.Println("=================================", "res: ", res["b"][0], "err: ", res["a"][1])
 
 	//持久化到mysql
 
