@@ -3,7 +3,8 @@ package main
 import (
 	"time"
 
-	"github.com/JREAMLU/core/logs"
+	"github.com/JREAMLU/core/global"
+	"github.com/JREAMLU/core/jlogs"
 	_ "github.com/JREAMLU/jkernel/base/routers"
 
 	"github.com/astaxie/beego"
@@ -25,5 +26,6 @@ func main() {
 
 	beego.AddFuncMap("i18n", i18n.Tr)
 
+	beego.ErrorController(&global.ErrorController{})
 	beego.Run()
 }
