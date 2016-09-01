@@ -47,16 +47,30 @@ DATA:
  */
 func (r *UrlController) GoShorten() {
 	//input params
-	rawMetaHeader, rawDataBody := inout.InputParams(r.Ctx.Input)
+	data := inout.InputParamsNew(r.Ctx)
 
 	//service
 	var service services.Url
-	httpStatus, shorten := service.GoShorten(rawMetaHeader, rawDataBody)
+	httpStatus, shorten := service.GoShorten(data)
 
 	r.Ctx.Output.SetStatus(httpStatus)
 	r.Data["json"] = shorten
 	r.ServeJSON()
 }
+
+// func (r *UrlController) GoShorten() {
+// 	//input params
+// 	rawMetaHeader, rawDataBody := inout.InputParams(r.Ctx.Input)
+// 	inout.InputParamsNew(r.Ctx)
+//
+// 	//service
+// 	var service services.Url
+// 	httpStatus, shorten := service.GoShorten(rawMetaHeader, rawDataBody)
+//
+// 	r.Ctx.Output.SetStatus(httpStatus)
+// 	r.Data["json"] = shorten
+// 	r.ServeJSON()
+// }
 
 func (r *UrlController) GoExpand() {
 }
