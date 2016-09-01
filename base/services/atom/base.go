@@ -8,7 +8,7 @@ import (
 var IP string
 
 func init() {
-	IP = com.GetServerIP()
+	IP, _ = com.ExternalIP()
 }
 
 func GetHeader(requestID string) map[string]string {
