@@ -128,6 +128,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output int
 	async.GoAsyncRequest(addFunc, 2)
 
 	//持久化到mysql
+	beego.Trace(inout.Rid + ":" + "持久化")
 
 	return inout.OK, inout.OutputSuccess(
 		datalist,
