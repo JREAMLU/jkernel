@@ -23,6 +23,8 @@ func init() {
 		beego.NSCond(func(ctx *context.Context) bool {
 			if ctx.Input.Domain() == beego.AppConfig.String("baseDomain") {
 				return true
+			} else if beego.AppConfig.String("runmode") == "dev" {
+				return true
 			}
 			return false
 		}),
