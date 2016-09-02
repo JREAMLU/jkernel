@@ -1,12 +1,16 @@
 package test
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"runtime"
 	"testing"
 
+	"github.com/JREAMLU/core/inout"
 	_ "github.com/JREAMLU/jkernel/base/routers"
+	"github.com/JREAMLU/jkernel/base/services"
+	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/astaxie/beego"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -34,7 +38,7 @@ func TestUrlGoshorten(t *testing.T) {
 	beego.BeeApp.Handlers.ServeHTTP(w, r)
 	beego.Trace("testing", "TestUrlGoshorten", "Code[%d]\n%s", w.Code, w.Body.String())
 
-	Convey("func Goshorten", t, func() {
+	Convey("func /v1/url/goshorten.json", t, func() {
 		Convey("Status Code Should Be 200", func() {
 			So(w.Code, ShouldEqual, 200)
 		})
@@ -42,4 +46,55 @@ func TestUrlGoshorten(t *testing.T) {
 			So(w.Body.Len(), ShouldBeGreaterThan, 0)
 		})
 	})
+}
+
+func TestUrlServiceGoshorten(t *testing.T) {
+	httpStatus, shorten := urlServiceGoshorten()
+
+	Convey("func Goshorten()", t, func() {
+		Convey("Status Code Should Be 200", func() {
+			So(httpStatus, ShouldEqual, 200)
+		})
+		Convey("result", func() {
+			datalist := shorten.Data.(atom.DataList)
+			So(datalist.Total, ShouldEqual, 2)
+			So(len(datalist.List["http://huiyimei.com"].(string)), ShouldBeGreaterThan, 0)
+			So(len(datalist.List["http://o9d.cn"].(string)), ShouldBeGreaterThan, 0)
+		})
+	})
+}
+
+func Benchmark_UrlServiceGoshorten(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		urlServiceGoshorten()
+	}
+}
+
+func urlServiceGoshorten() (int, inout.Output) {
+	data := make(map[string]interface{})
+	h := `{"Accept":["application/json"],"Content-Type":["application/json;charset=UTF-8;"],"Ip":["9.9.9.9"],"Request-Id":["base-57c930de30e8bd1aac000001"],"Source":["gotest"]}`
+	hm := make(http.Header)
+	hm["Accept"] = []string{"application/json"}
+	hm["Content-Type"] = []string{"application/json;charset=UTF-8;"}
+	hm["Ip"] = []string{"9.9.9.9"}
+	hm["Request-Id"] = []string{"base-57c930de30e8bd1aac000001"}
+	hm["Source"] = []string{"gotest"}
+	b := `{"data":{"urls":[{"long_url":"http://o9d.cn","IP":"127.0.0.1"},{"long_url":"http://huiyimei.com","IP":"192.168.1.1"}],"timestamp":1466668134,"sign":"0B490F84305C7CF4D9CDD293B936BE0D"}}`
+	c := `[]`
+	q := `"a":["1"],"b":["2"]}`
+	qm := make(map[string][]string)
+	qm["a"] = []string{"1"}
+	qm["b"] = []string{"2"}
+
+	data["header"] = []byte(h)
+	data["body"] = []byte(b)
+	data["cookies"] = []byte(c)
+	data["querystr"] = []byte(q)
+	data["headermap"] = hm
+	data["cookiesslice"] = []string{""}
+	data["querystrmap"] = qm
+
+	var service services.Url
+
+	return service.GoShorten(data)
 }

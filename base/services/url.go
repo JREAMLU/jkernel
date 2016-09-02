@@ -24,11 +24,6 @@ type Url struct {
 	} `json:"data" valid:"Required"`
 }
 
-type dataList struct {
-	Total int                    `json:"total"`
-	List  map[string]interface{} `json:"list"`
-}
-
 func GetParams(url Url) Url {
 	return url
 }
@@ -46,7 +41,7 @@ func (r *Url) Valid(v *validation.Validation) {}
  *	@params		params []byte	参数
  *	@return 	httpStatus lice
  */
-func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output interface{}) {
+func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output inout.Output) {
 	//将传递过来多json raw解析到struct
 	ffjson.Unmarshal(data["body"].([]byte), r)
 
@@ -80,7 +75,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output int
 		params = append(params, params_map)
 	}
 
-	var datalist dataList
+	var datalist atom.DataList
 	datalist.List = list
 	datalist.Total = len(list)
 
