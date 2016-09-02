@@ -17,7 +17,7 @@ func GetHeader(requestID string) map[string]string {
 		"Accept":          beego.AppConfig.String("Accept"),
 		"Accept-Language": beego.AppConfig.String("lang.default"),
 		"source":          beego.AppConfig.String("appname"),
-		"Request-ID":      requestID,
+		"Request-Id":      requestID,
 		"ip":              IP,
 	}
 
