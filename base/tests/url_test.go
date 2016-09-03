@@ -64,10 +64,12 @@ func TestUrlServiceGoshorten(t *testing.T) {
 	})
 }
 
-func Benchmark_UrlServiceGoshorten(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		urlServiceGoshorten()
-	}
+func BenchmarkUrlServiceGoshorten(b *testing.B) {
+	Convey("bench UrlServiceGoshorten \n", b, func() {
+		for i := 0; i < b.N; i++ {
+			urlServiceGoshorten()
+		}
+	})
 }
 
 func urlServiceGoshorten() (int, inout.Output) {
