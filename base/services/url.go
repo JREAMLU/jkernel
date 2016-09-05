@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/JREAMLU/core/async"
-	"github.com/JREAMLU/core/inout"
+	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/core/sign"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/astaxie/beego"
@@ -41,24 +41,41 @@ func (r *Url) Valid(v *validation.Validation) {}
  *	@params		params []byte	参数
  *	@return 	httpStatus lice
  */
-func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output inout.Output) {
+func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.Output) {
 	//将传递过来多json raw解析到struct
 	ffjson.Unmarshal(data["body"].([]byte), r)
 
 	//参数验证
-	checked, err := inout.InputParamsCheck(data, &r.Data)
+	ch, err := io.InputParamsCheck(data, &r.Data)
 	if err != nil {
-		return inout.EXPECTATION_FAILED, inout.OutputFail(
-			checked.Message,
+		return io.EXPECTATION_FAILED, io.Fail(
+			ch.Message,
 			"DATAPARAMSILLEGAL",
-			checked.RequestID,
+			ch.RequestID,
 		)
 	}
 
-	//进行shorten
-	var list = make(map[string]interface{})
-	var params_map = make(map[string]interface{})
+	//shorten && indb
+	list := shorten(r)
+
+	var datalist atom.DataList
+	datalist.List = list
+	datalist.Total = len(list)
+
+	//请求其他接口
+	request()
+
+	return io.OK, io.Suc(
+		datalist,
+		ch.RequestID,
+	)
+}
+
+func shorten(r *Url) map[string]interface{} {
+	list := make(map[string]interface{})
+	params_map := make(map[string]interface{})
 	params := []map[string]interface{}{}
+
 	for _, val := range r.Data.Urls {
 		shortUrl := atom.GetShortenUrl(val.LongURL, beego.AppConfig.String("ShortenDomain"))
 		list[val.LongURL] = shortUrl
@@ -75,14 +92,16 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output ino
 		params = append(params, params_map)
 	}
 
-	var datalist atom.DataList
-	datalist.List = list
-	datalist.Total = len(list)
+	//持久化到mysql
+	beego.Trace(io.Rid + ":" + "持久化")
 
-	//请求其他接口
-	var requestParams = make(map[string]interface{})
-	var rdata = make(map[string]interface{})
-	var urls []map[string]string
+	return list
+}
+
+func request() {
+	requestParams := make(map[string]interface{})
+	rdata := make(map[string]interface{})
+	urls := []map[string]string{}
 	timestamp := time.Now().Unix()
 	urls = append(urls, map[string]string{"long_url": "http://o9d.cn", "IP": "127.0.0.1"})
 	urls = append(urls, map[string]string{"long_url": "http://huiyimei.net", "IP": "192.168.1.1"})
@@ -98,35 +117,28 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output ino
 	addFunc = append(
 		addFunc,
 		async.AddFunc{
-			Name:    "a",
+			Logo:    "a",
 			Handler: atom.RequestGetAyiName,
 			Params: []interface{}{
 				requestParams,
 				timestamp,
-				checked.CheckRes["Request-Id"],
+				io.Rid,
 			},
 		},
 	)
 	addFunc = append(
 		addFunc,
 		async.AddFunc{
-			Name:    "b",
+			Logo:    "b",
 			Handler: atom.RequestGetAyiName,
 			Params: []interface{}{
 				requestParams,
 				timestamp,
-				checked.CheckRes["Request-Id"],
+				io.Rid,
 			},
 		},
 	)
 
 	async.GoAsyncRequest(addFunc, 2)
 
-	//持久化到mysql
-	beego.Trace(inout.Rid + ":" + "持久化")
-
-	return inout.OK, inout.OutputSuccess(
-		datalist,
-		checked.RequestID,
-	)
 }
