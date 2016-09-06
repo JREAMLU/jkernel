@@ -8,6 +8,7 @@ import (
 	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/core/sign"
 	"github.com/JREAMLU/jkernel/base/services/atom"
+	"github.com/JREAMLU/jkernel/base/services/entity"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
 	"github.com/pquerna/ffjson/ffjson"
@@ -58,7 +59,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 	//shorten && indb
 	list := shorten(r)
 
-	var datalist atom.DataList
+	var datalist entity.DataList
 	datalist.List = list
 	datalist.Total = len(list)
 

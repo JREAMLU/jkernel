@@ -10,7 +10,7 @@ import (
 	"github.com/JREAMLU/core/inout"
 	_ "github.com/JREAMLU/jkernel/base/routers"
 	"github.com/JREAMLU/jkernel/base/services"
-	"github.com/JREAMLU/jkernel/base/services/atom"
+	"github.com/JREAMLU/jkernel/base/services/entity"
 	"github.com/astaxie/beego"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -56,7 +56,7 @@ func TestUrlServiceGoshorten(t *testing.T) {
 			So(httpStatus, ShouldEqual, 200)
 		})
 		Convey("result", func() {
-			datalist := shorten.Data.(atom.DataList)
+			datalist := shorten.Data.(entity.DataList)
 			So(datalist.Total, ShouldEqual, 2)
 			So(len(datalist.List["http://huiyimei.com"].(string)), ShouldBeGreaterThan, 0)
 			So(len(datalist.List["http://o9d.cn"].(string)), ShouldBeGreaterThan, 0)

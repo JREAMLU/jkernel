@@ -1,4 +1,4 @@
-package atom
+package entity
 
 type DataList struct {
 	Total int                    `json:"total"`
