@@ -20,8 +20,6 @@ type Url struct {
 			LongURL string `json:"long_url" valid:"Required"`
 			IP      string `json:"ip" valid:"IP"`
 		} `json:"urls" valid:"Required"`
-		Timestamp int    `json:"timestamp" valid:"Required"`
-		Sign      string `json:"sign" valid:"Required"`
 	} `json:"data" valid:"Required"`
 }
 
