@@ -2,6 +2,8 @@ package services
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/JREAMLU/core/async"
@@ -62,7 +64,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 	datalist.Total = len(list)
 
 	//请求其他接口
-	request()
+	request(data)
 
 	return io.OK, io.Suc(
 		datalist,
@@ -97,7 +99,10 @@ func shorten(r *Url) map[string]interface{} {
 	return list
 }
 
-func request() {
+func request(data map[string]interface{}) {
+	token := data["headermap"].(http.Header)["Token"][0]
+	ts, _ := strconv.ParseInt(data["headermap"].(http.Header)["Timestamp"][0], 10, 64)
+	beego.Trace(token, ts)
 	requestParams := make(map[string]interface{})
 	rdata := make(map[string]interface{})
 	urls := []map[string]string{}
