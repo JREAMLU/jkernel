@@ -34,6 +34,8 @@ func init() {
 			beego.NSRouter("/goexpand.json", &controllers.UrlController{}, "post:GoExpand"),
 			beego.NSRouter("/goexpand", &controllers.UrlController{}, "post:GoExpand"),
 		),
+		beego.NSRouter("/object", &controllers.ObjectController{}, "post:Post"),
+		beego.NSRouter("/test", &controllers.TesController{}, "post:Post"),
 	)
 
 	beego.AddNamespace(base)

@@ -1,7 +1,14 @@
 package services
 
 import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/JREAMLU/core/async"
 	io "github.com/JREAMLU/core/inout"
+	"github.com/JREAMLU/core/sign"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/JREAMLU/jkernel/base/services/entity"
 	"github.com/astaxie/beego"
@@ -22,11 +29,24 @@ func GetParams(url Url) Url {
 	return url
 }
 
+/**
+ *	自定义多valid
+ */
 func (r *Url) Valid(v *validation.Validation) {}
 
+/**
+ *	@auther		jream.lu
+ *	@intro		原始链接=>短链接
+ *	@logic
+ *	@todo		参数验证抽出去
+ *	@params		params []byte	参数
+ *	@return 	httpStatus lice
+ */
 func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.Output) {
+	//将传递过来多json raw解析到struct
 	ffjson.Unmarshal(data["body"].([]byte), r)
 
+	//参数验证
 	ch, err := io.InputParamsCheck(data, &r.Data)
 	if err != nil {
 		return io.EXPECTATION_FAILED, io.Fail(
@@ -36,11 +56,15 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 		)
 	}
 
+	//shorten && indb
 	list := shorten(r)
 
 	var datalist entity.DataList
 	datalist.List = list
 	datalist.Total = len(list)
+
+	//请求其他接口
+	request(data)
 
 	return io.OK, io.Suc(
 		datalist,
@@ -73,4 +97,52 @@ func shorten(r *Url) map[string]interface{} {
 	beego.Trace(io.Rid + ":" + "持久化")
 
 	return list
+}
+
+func request(data map[string]interface{}) {
+	token := data["headermap"].(http.Header)["Token"][0]
+	ts, _ := strconv.ParseInt(data["headermap"].(http.Header)["Timestamp"][0], 10, 64)
+	beego.Trace(token, ts)
+	requestParams := make(map[string]interface{})
+	rdata := make(map[string]interface{})
+	urls := []map[string]string{}
+	timestamp := time.Now().Unix()
+	urls = append(urls, map[string]string{"long_url": "http://o9d.cn", "IP": "127.0.0.1"})
+	urls = append(urls, map[string]string{"long_url": "http://huiyimei.net", "IP": "192.168.1.1"})
+	rdata["urls"] = urls
+	rdata["timestamp"] = timestamp
+	requestParams["data"] = rdata
+	raw, _ := json.Marshal(requestParams)
+	sign := sign.GenerateSign(raw, timestamp, beego.AppConfig.String("sign.secretKey"))
+	requestParams["sign"] = sign
+	// atom.RequestGetAyiName(requestParams, timestamp)
+
+	var addFunc async.MultiAddFunc
+	addFunc = append(
+		addFunc,
+		async.AddFunc{
+			Logo:    "a",
+			Handler: atom.RequestGetAyiName,
+			Params: []interface{}{
+				requestParams,
+				timestamp,
+				io.Rid,
+			},
+		},
+	)
+	addFunc = append(
+		addFunc,
+		async.AddFunc{
+			Logo:    "b",
+			Handler: atom.RequestGetAyiName,
+			Params: []interface{}{
+				requestParams,
+				timestamp,
+				io.Rid,
+			},
+		},
+	)
+
+	async.GoAsyncRequest(addFunc, 2)
+
 }
