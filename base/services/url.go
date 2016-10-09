@@ -2,6 +2,7 @@ package services
 
 import (
 	io "github.com/JREAMLU/core/inout"
+	"github.com/JREAMLU/jkernel/base/models/mredis"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/JREAMLU/jkernel/base/services/entity"
 	"github.com/astaxie/beego"
@@ -54,7 +55,7 @@ func shorten(r *Url) map[string]interface{} {
 	params := []map[string]interface{}{}
 
 	for _, val := range r.Data.Urls {
-		shortUrl := atom.GetShortenUrl(val.LongURL, beego.AppConfig.String("ShortenDomain"))
+		shortUrl := atom.GetShortenUrl(val.LongURL)
 		list[val.LongURL] = shortUrl
 
 		params_map["long_url"] = val.LongURL
@@ -67,6 +68,8 @@ func shorten(r *Url) map[string]interface{} {
 		params_map["created_at"] = 456
 		params_map["updated_at"] = 456
 		params = append(params, params_map)
+
+		mredis.ShortenHSet(val.LongURL, shortUrl)
 	}
 
 	//持久化到mysql

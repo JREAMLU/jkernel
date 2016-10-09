@@ -29,16 +29,13 @@ const (
  *	@params		url, shortenDomain string   原始url, 短网址域名
  *	@return 	string
  */
-func GetShortenUrl(url, shortenDomain string) string {
+func GetShortenUrl(url string) string {
 	//随机
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	random := r.Intn(Four)
 
 	shortenUrl := ShortenUrl(url)
-	shortenUrlParams := shortenUrl[random]
-
-	sUrl := shortenDomain + shortenUrlParams
-	return sUrl
+	return shortenUrl[random]
 }
 
 /**
