@@ -64,9 +64,9 @@ func shorten(r *Url) map[string]interface{} {
 	for _, val := range r.Data.Urls {
 		shortUrl := atom.GetShortenUrl(val.LongURL)
 
-		short, err := setCache(val.LongURL, shortUrl)
+		short, err := setDB(val.LongURL, shortUrl)
 		if err != nil {
-			beego.Trace("setCache error: ", err)
+			beego.Trace("setDB error: ", err)
 		}
 
 		list[val.LongURL] = beego.AppConfig.String("ShortenDomain") + short
@@ -91,12 +91,13 @@ func shorten(r *Url) map[string]interface{} {
 	return list
 }
 
-func setCache(origin string, short string) (string, error) {
+func setDB(origin string, short string) (string, error) {
 	reply, err := mredis.ShortenHGet(origin)
 	if err != nil && err.Error() != "redigo: nil returned" {
 		return "", err
 	}
 	if reply == "" {
+		//@todo mysql
 		_, err = mredis.ShortenHSet(origin, short)
 		if err != nil {
 			return "", err
