@@ -22,7 +22,7 @@ func ShortenHSet(origin string, short string) (reply int64, err error) {
 	return reply, err
 }
 
-func ShortenHget(origin string) (reply string, err error) {
+func ShortenHGet(origin string) (reply string, err error) {
 	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
 	reply, err = redis.String(conn.Do("HGET", shortenKey, origin))
 	conn.Close()
@@ -36,7 +36,7 @@ func ExpandHSet(short string, origin string) (reply string, err error) {
 	return reply, err
 }
 
-func ExpandHget(short string) (reply string, err error) {
+func ExpandHGet(short string) (reply string, err error) {
 	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
 	reply, err = redis.String(conn.Do("HGET", expandKey, short))
 	conn.Close()
