@@ -93,8 +93,13 @@ func setCache(origin string, short string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		mredis.ExpandHSet(short, origin)
 		return short, nil
 	}
 
 	return reply, nil
+}
+
+func GoExpand() {
+
 }

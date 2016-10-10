@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/JREAMLU/core/global"
 	"github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/services"
@@ -44,10 +46,8 @@ DATA:
  *	@todo 			参数验证, 封装返回
  */
 func (r *UrlController) GoShorten() {
-	//input params
 	data := inout.InputParams(r.Ctx)
 
-	//service
 	var service services.Url
 	httpStatus, shorten := service.GoShorten(data)
 
@@ -57,4 +57,10 @@ func (r *UrlController) GoShorten() {
 }
 
 func (r *UrlController) GoExpand() {
+	data := inout.InputParams(r.Ctx)
+	fmt.Println(data)
+
+	// r.Ctx.Output.SetStatus(httpStatus)
+	// r.Data["json"] = shorten
+	// r.ServeJSON()
 }

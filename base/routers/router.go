@@ -31,8 +31,8 @@ func init() {
 		beego.NSNamespace("url",
 			beego.NSRouter("/goshorten.json", &controllers.UrlController{}, "post:GoShorten"),
 			beego.NSRouter("/goshorten", &controllers.UrlController{}, "post:GoShorten"),
-			beego.NSRouter("/goexpand.json", &controllers.UrlController{}, "post:GoExpand"),
-			beego.NSRouter("/goexpand", &controllers.UrlController{}, "post:GoExpand"),
+			beego.NSRouter("/goexpand.json", &controllers.UrlController{}, "get:GoExpand"),
+			beego.NSRouter("/goexpand", &controllers.UrlController{}, "get:GoExpand"),
 		),
 	)
 
