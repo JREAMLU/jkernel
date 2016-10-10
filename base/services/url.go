@@ -37,7 +37,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 
 	ch, err := io.InputParamsCheck(data, &r.Data)
 	if err != nil {
-		return io.EXPECTATION_FAILED, io.Fail(
+		return io.BAD_REQUEST, io.Fail(
 			ch.Message,
 			"DATAPARAMSILLEGAL",
 			ch.RequestID,
@@ -113,7 +113,7 @@ func (r *Url) GoExpand(data map[string]interface{}) (httpStatus int, output io.O
 
 	ch, err := io.InputParamsCheck(data, ue)
 	if err != nil {
-		return io.EXPECTATION_FAILED, io.Fail(
+		return io.BAD_REQUEST, io.Fail(
 			ch.Message,
 			"DATAPARAMSILLEGAL",
 			ch.RequestID,
