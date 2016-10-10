@@ -1,6 +1,9 @@
 package services
 
 import (
+	"fmt"
+	"strings"
+
 	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/models/mredis"
 	"github.com/JREAMLU/jkernel/base/services/atom"
@@ -17,6 +20,10 @@ type Url struct {
 			IP      string `json:"ip" valid:"IP"`
 		} `json:"urls" valid:"Required"`
 	} `json:"data" valid:"Required"`
+}
+
+type UrlExpand struct {
+	Shorten []string `json:"shorten" valid:"Required"`
 }
 
 func GetParams(url Url) Url {
@@ -43,7 +50,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 	datalist.List = list
 	datalist.Total = len(list)
 
-	return io.OK, io.Suc(
+	return io.CREATED, io.Suc(
 		datalist,
 		ch.RequestID,
 	)
@@ -64,6 +71,7 @@ func shorten(r *Url) map[string]interface{} {
 
 		list[val.LongURL] = beego.AppConfig.String("ShortenDomain") + short
 
+		atom.Mu.Lock()
 		params_map["long_url"] = val.LongURL
 		params_map["short_url"] = short
 		params_map["long_crc"] = 1
@@ -73,6 +81,7 @@ func shorten(r *Url) map[string]interface{} {
 		params_map["updated_by_ip"] = 123
 		params_map["created_at"] = 456
 		params_map["updated_at"] = 456
+		atom.Mu.Unlock()
 		params = append(params, params_map)
 	}
 
@@ -87,7 +96,6 @@ func setCache(origin string, short string) (string, error) {
 	if err != nil && err.Error() != "redigo: nil returned" {
 		return "", err
 	}
-
 	if reply == "" {
 		_, err = mredis.ShortenHSet(origin, short)
 		if err != nil {
@@ -96,10 +104,46 @@ func setCache(origin string, short string) (string, error) {
 		mredis.ExpandHSet(short, origin)
 		return short, nil
 	}
-
 	return reply, nil
 }
 
-func GoExpand() {
+func (r *Url) GoExpand(data map[string]interface{}) (httpStatus int, output io.Output) {
+	var ue UrlExpand
+	ffjson.Unmarshal([]byte(data["querystrjson"].(string)), &ue)
 
+	ch, err := io.InputParamsCheck(data, ue)
+	if err != nil {
+		return io.EXPECTATION_FAILED, io.Fail(
+			ch.Message,
+			"DATAPARAMSILLEGAL",
+			ch.RequestID,
+		)
+	}
+
+	list := expand(&ue)
+
+	var datalist entity.DataList
+	datalist.List = list
+	datalist.Total = len(list)
+
+	return io.OK, io.Suc(
+		datalist,
+		ch.RequestID,
+	)
+}
+
+func expand(ue *UrlExpand) map[string]interface{} {
+	list := make(map[string]interface{})
+	shortens := ue.Shorten[0]
+	for _, shorten := range strings.Split(shortens, ",") {
+		reply, err := mredis.ExpandHGet(shorten)
+		if err != nil {
+			beego.Trace("expand error: ", err)
+		}
+		fmt.Println("<<<<<", reply)
+		atom.Mu.Lock()
+		list[shorten] = reply
+		atom.Mu.Unlock()
+	}
+	return list
 }

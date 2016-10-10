@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"github.com/JREAMLU/core/global"
 	"github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/services"
@@ -58,9 +56,11 @@ func (r *UrlController) GoShorten() {
 
 func (r *UrlController) GoExpand() {
 	data := inout.InputParams(r.Ctx)
-	fmt.Println(data)
 
-	// r.Ctx.Output.SetStatus(httpStatus)
-	// r.Data["json"] = shorten
-	// r.ServeJSON()
+	var service services.Url
+	httpStatus, expand := service.GoExpand(data)
+
+	r.Ctx.Output.SetStatus(httpStatus)
+	r.Data["json"] = expand
+	r.ServeJSON()
 }
