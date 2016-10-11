@@ -2,9 +2,15 @@ package services
 
 import (
 	"fmt"
+	"hash/crc32"
+	"net/http"
 	"strings"
+	"time"
 
+	"github.com/JREAMLU/core/com"
 	io "github.com/JREAMLU/core/inout"
+	"github.com/JREAMLU/jkernel/base/models/mentity"
+	"github.com/JREAMLU/jkernel/base/models/mmysql"
 	"github.com/JREAMLU/jkernel/base/models/mredis"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/JREAMLU/jkernel/base/services/entity"
@@ -26,6 +32,8 @@ type UrlExpand struct {
 	Shorten []string `json:"shorten" valid:"Required"`
 }
 
+var ip string
+
 func GetParams(url Url) Url {
 	return url
 }
@@ -34,7 +42,7 @@ func (r *Url) Valid(v *validation.Validation) {}
 
 func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.Output) {
 	ffjson.Unmarshal(data["body"].([]byte), r)
-
+	ip = data["headermap"].(http.Header)["X-Forwarded-For"][0]
 	ch, err := io.InputParamsCheck(data, &r.Data)
 	if err != nil {
 		return io.BAD_REQUEST, io.Fail(
@@ -58,8 +66,6 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 
 func shorten(r *Url) map[string]interface{} {
 	list := make(map[string]interface{})
-	params_map := make(map[string]interface{})
-	params := []map[string]interface{}{}
 
 	for _, val := range r.Data.Urls {
 		shortUrl := atom.GetShortenUrl(val.LongURL)
@@ -70,23 +76,7 @@ func shorten(r *Url) map[string]interface{} {
 		}
 
 		list[val.LongURL] = beego.AppConfig.String("ShortenDomain") + short
-
-		atom.Mu.Lock()
-		params_map["long_url"] = val.LongURL
-		params_map["short_url"] = short
-		params_map["long_crc"] = 1
-		params_map["short_crc"] = 1
-		params_map["status"] = 1
-		params_map["created_by_ip"] = 123
-		params_map["updated_by_ip"] = 123
-		params_map["created_at"] = 456
-		params_map["updated_at"] = 456
-		atom.Mu.Unlock()
-		params = append(params, params_map)
 	}
-
-	//持久化到mysql
-	beego.Trace(io.Rid + ":" + "持久化")
 
 	return list
 }
@@ -97,7 +87,22 @@ func setDB(origin string, short string) (string, error) {
 		return "", err
 	}
 	if reply == "" {
-		//@todo mysql
+		var redirect mentity.Redirect
+		redirect.LongUrl = origin
+		redirect.ShortUrl = short
+		redirect.LongCrc = uint64(crc32.ChecksumIEEE([]byte(origin)))
+		redirect.ShortCrc = uint64(crc32.ChecksumIEEE([]byte(short)))
+		redirect.Status = 1
+		redirect.CreatedByIP = uint64(com.Ip2Int(ip))
+		redirect.UpdateByIP = uint64(com.Ip2Int(ip))
+		redirect.CreateAT = uint64(time.Now().Unix())
+		redirect.UpdateAT = uint64(time.Now().Unix())
+
+		_, err := mmysql.ShortenIn(redirect)
+		if err != nil {
+			beego.Error("setDB error: ", err)
+		}
+
 		_, err = mredis.ShortenHSet(origin, short)
 		if err != nil {
 			return "", err

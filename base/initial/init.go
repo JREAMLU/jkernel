@@ -4,4 +4,5 @@ func init() {
 	InitTimezone()
 	InitLog()
 	InitRedis()
+	InitMysql()
 }
