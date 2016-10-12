@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"hash/crc32"
 	"net/http"
 	"strings"
@@ -45,7 +44,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 	ip = data["headermap"].(http.Header)["X-Forwarded-For"][0]
 	ch, err := io.InputParamsCheck(data, &r.Data)
 	if err != nil {
-		return io.BAD_REQUEST, io.Fail(
+		return http.StatusExpectationFailed, io.Fail(
 			ch.Message,
 			"DATAPARAMSILLEGAL",
 			ch.RequestID,
@@ -58,7 +57,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 	datalist.List = list
 	datalist.Total = len(list)
 
-	return io.CREATED, io.Suc(
+	return http.StatusCreated, io.Suc(
 		datalist,
 		ch.RequestID,
 	)
@@ -119,7 +118,7 @@ func (r *Url) GoExpand(data map[string]interface{}) (httpStatus int, output io.O
 
 	ch, err := io.InputParamsCheck(data, ue)
 	if err != nil {
-		return io.BAD_REQUEST, io.Fail(
+		return http.StatusExpectationFailed, io.Fail(
 			ch.Message,
 			"DATAPARAMSILLEGAL",
 			ch.RequestID,
@@ -132,7 +131,7 @@ func (r *Url) GoExpand(data map[string]interface{}) (httpStatus int, output io.O
 	datalist.List = list
 	datalist.Total = len(list)
 
-	return io.OK, io.Suc(
+	return http.StatusCreated, io.Suc(
 		datalist,
 		ch.RequestID,
 	)
@@ -146,7 +145,6 @@ func expand(ue *UrlExpand) map[string]interface{} {
 		if err != nil {
 			beego.Trace("expand error: ", err)
 		}
-		fmt.Println("<<<<<", reply)
 		atom.Mu.Lock()
 		list[shorten] = reply
 		atom.Mu.Unlock()

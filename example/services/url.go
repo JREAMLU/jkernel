@@ -9,8 +9,8 @@ import (
 	"github.com/JREAMLU/core/async"
 	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/core/sign"
-	"github.com/JREAMLU/jkernel/base/services/atom"
-	"github.com/JREAMLU/jkernel/base/services/entity"
+	"github.com/JREAMLU/jkernel/example/services/atom"
+	"github.com/JREAMLU/jkernel/example/services/entity"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
 	"github.com/pquerna/ffjson/ffjson"
@@ -49,7 +49,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 	//参数验证
 	ch, err := io.InputParamsCheck(data, &r.Data)
 	if err != nil {
-		return io.EXPECTATION_FAILED, io.Fail(
+		return http.StatusExpectationFailed, io.Fail(
 			ch.Message,
 			"DATAPARAMSILLEGAL",
 			ch.RequestID,
@@ -66,7 +66,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 	//请求其他接口
 	request(data)
 
-	return io.OK, io.Suc(
+	return http.StatusAccepted, io.Suc(
 		datalist,
 		ch.RequestID,
 	)
