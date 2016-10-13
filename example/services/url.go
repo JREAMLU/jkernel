@@ -94,7 +94,7 @@ func shorten(r *Url) map[string]interface{} {
 	}
 
 	//持久化到mysql
-	beego.Trace(io.Rid + ":" + "持久化")
+	beego.Trace(io.Jctx.Value("requestID").(string) + ":" + "持久化")
 
 	return list
 }
@@ -126,7 +126,7 @@ func request(data map[string]interface{}) {
 			Params: []interface{}{
 				requestParams,
 				timestamp,
-				io.Rid,
+				io.Jctx.Value("requestID").(string),
 			},
 		},
 	)
@@ -138,7 +138,7 @@ func request(data map[string]interface{}) {
 			Params: []interface{}{
 				requestParams,
 				timestamp,
-				io.Rid,
+				io.Jctx.Value("requestID").(string),
 			},
 		},
 	)

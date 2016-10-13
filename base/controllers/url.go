@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/JREAMLU/core/global"
-	"github.com/JREAMLU/core/inout"
+	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/services"
 )
 
@@ -44,7 +44,7 @@ DATA:
  *	@todo 			参数验证, 封装返回
  */
 func (r *UrlController) GoShorten() {
-	data := inout.InputParams(r.Ctx)
+	data := io.InputParams(r.Ctx)
 
 	var service services.Url
 	httpStatus, shorten := service.GoShorten(data)
@@ -55,7 +55,7 @@ func (r *UrlController) GoShorten() {
 }
 
 func (r *UrlController) GoExpand() {
-	data := inout.InputParams(r.Ctx)
+	data := io.InputParams(r.Ctx)
 
 	var service services.Url
 	httpStatus, expand := service.GoExpand(data)
