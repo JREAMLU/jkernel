@@ -44,10 +44,10 @@ DATA:
  *	@todo 			参数验证, 封装返回
  */
 func (r *UrlController) GoShorten() {
-	data := io.InputParams(r.Ctx)
+	data, jctx := io.InputParams(r.Ctx)
 
 	var service services.Url
-	httpStatus, shorten := service.GoShorten(data)
+	httpStatus, shorten := service.GoShorten(jctx, data)
 
 	r.Ctx.Output.SetStatus(httpStatus)
 	r.Data["json"] = shorten
@@ -55,10 +55,10 @@ func (r *UrlController) GoShorten() {
 }
 
 func (r *UrlController) GoExpand() {
-	data := io.InputParams(r.Ctx)
+	data, jctx := io.InputParams(r.Ctx)
 
 	var service services.Url
-	httpStatus, expand := service.GoExpand(data)
+	httpStatus, expand := service.GoExpand(jctx, data)
 
 	r.Ctx.Output.SetStatus(httpStatus)
 	r.Data["json"] = expand

@@ -1,6 +1,7 @@
 package services
 
 import (
+	jcontext "context"
 	"hash/crc32"
 	"net/http"
 	"strings"
@@ -39,10 +40,10 @@ func GetParams(url Url) Url {
 
 func (r *Url) Valid(v *validation.Validation) {}
 
-func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.Output) {
+func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
 	ffjson.Unmarshal(data["body"].([]byte), r)
 	ip = data["headermap"].(http.Header)["X-Forwarded-For"][0]
-	ch, err := io.InputParamsCheck(data, &r.Data)
+	ch, err := io.InputParamsCheck(jctx, data, &r.Data)
 	if err != nil {
 		return http.StatusExpectationFailed, io.Fail(
 			ch.Message,
@@ -51,7 +52,7 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 		)
 	}
 
-	list := shorten(r)
+	list := shorten(jctx, r)
 
 	var datalist entity.DataList
 	datalist.List = list
@@ -63,13 +64,13 @@ func (r *Url) GoShorten(data map[string]interface{}) (httpStatus int, output io.
 	)
 }
 
-func shorten(r *Url) map[string]interface{} {
+func shorten(jctx jcontext.Context, r *Url) map[string]interface{} {
 	list := make(map[string]interface{})
 
 	for _, val := range r.Data.Urls {
 		shortUrl := atom.GetShortenUrl(val.LongURL)
 
-		short, err := setDB(val.LongURL, shortUrl)
+		short, err := setDB(jctx, val.LongURL, shortUrl)
 		if err != nil {
 			beego.Trace("setDB error: ", err)
 		}
@@ -80,7 +81,7 @@ func shorten(r *Url) map[string]interface{} {
 	return list
 }
 
-func setDB(origin string, short string) (string, error) {
+func setDB(jctx jcontext.Context, origin string, short string) (string, error) {
 	reply, err := mredis.ShortenHGet(origin)
 	if err != nil && err.Error() != "redigo: nil returned" {
 		return "", err
@@ -112,11 +113,11 @@ func setDB(origin string, short string) (string, error) {
 	return reply, nil
 }
 
-func (r *Url) GoExpand(data map[string]interface{}) (httpStatus int, output io.Output) {
+func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
 	var ue UrlExpand
 	ffjson.Unmarshal([]byte(data["querystrjson"].(string)), &ue)
 
-	ch, err := io.InputParamsCheck(data, ue)
+	ch, err := io.InputParamsCheck(jctx, data, ue)
 	if err != nil {
 		return http.StatusExpectationFailed, io.Fail(
 			ch.Message,
@@ -125,7 +126,7 @@ func (r *Url) GoExpand(data map[string]interface{}) (httpStatus int, output io.O
 		)
 	}
 
-	list := expand(&ue)
+	list := expand(jctx, &ue)
 
 	var datalist entity.DataList
 	datalist.List = list
@@ -137,7 +138,7 @@ func (r *Url) GoExpand(data map[string]interface{}) (httpStatus int, output io.O
 	)
 }
 
-func expand(ue *UrlExpand) map[string]interface{} {
+func expand(jctx jcontext.Context, ue *UrlExpand) map[string]interface{} {
 	list := make(map[string]interface{})
 	shortens := ue.Shorten[0]
 	for _, shorten := range strings.Split(shortens, ",") {

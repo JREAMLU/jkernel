@@ -47,7 +47,7 @@ DATA:
  */
 func (r *UrlController) GoShorten() {
 	//input params
-	data := inout.InputParams(r.Ctx)
+	data, _ := inout.InputParams(r.Ctx)
 
 	//service
 	var service services.Url
