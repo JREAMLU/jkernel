@@ -9,5 +9,6 @@ func InitRedis() {
 	err := redigos.LoadRedisConfig(beego.AppConfig.String("redis.file"))
 	if err != nil {
 		beego.Error("init redis error: ", err)
+		panic("init redis error")
 	}
 }

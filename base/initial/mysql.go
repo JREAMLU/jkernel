@@ -14,5 +14,6 @@ func InitMysql() {
 	err := gconf.InitGorm()
 	if err != nil {
 		beego.Error("init mysql error: ", err)
+		panic("init mysql error")
 	}
 }
