@@ -1,6 +1,7 @@
 package test
 
 import (
+	jcontext "context"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -36,7 +37,7 @@ func TestUrlGoshorten(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	beego.BeeApp.Handlers.ServeHTTP(w, r)
-	beego.Trace("testing", "TestUrlGoshorten", "Code[%d]\n%s", w.Code, w.Body.String())
+	beego.Info("testing", "TestUrlGoshorten", "Code[%d]\n%s", w.Code, w.Body.String())
 
 	Convey("func /v1/url/goshorten.json", t, func() {
 		Convey("Status Code Should Be 200", func() {
@@ -98,5 +99,6 @@ func urlServiceGoshorten() (int, inout.Output) {
 
 	var service services.Url
 
-	return service.GoShorten(data)
+	var jctx jcontext.Context
+	return service.GoShorten(jctx, data)
 }

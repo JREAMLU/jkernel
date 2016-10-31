@@ -72,7 +72,7 @@ func shorten(jctx jcontext.Context, r *Url) map[string]interface{} {
 
 		short, err := setDB(jctx, val.LongURL, shortUrl)
 		if err != nil {
-			beego.Trace(jctx.Value("requestID").(string), ":", "setDB error: ", err)
+			beego.Info(jctx.Value("requestID").(string), ":", "setDB error: ", err)
 		}
 
 		list[val.LongURL] = beego.AppConfig.String("ShortenDomain") + short
@@ -144,7 +144,7 @@ func expand(jctx jcontext.Context, ue *UrlExpand) map[string]interface{} {
 	for _, shorten := range strings.Split(shortens, ",") {
 		reply, err := mredis.ExpandHGet(shorten)
 		if err != nil {
-			beego.Trace(jctx.Value("requestID").(string), ":", "expand error: ", err)
+			beego.Info(jctx.Value("requestID").(string), ":", "expand error: ", err)
 		}
 		atom.Mu.Lock()
 		list[shorten] = reply
