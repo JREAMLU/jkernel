@@ -101,6 +101,7 @@ func setDB(jctx jcontext.Context, origin string, short string) (string, error) {
 		_, err := mmysql.ShortenIn(redirect)
 		if err != nil {
 			beego.Error(jctx.Value("requestID").(string), ":", "setDB error: ", err)
+			return "", err
 		}
 
 		_, err = mredis.ShortenHSet(origin, short)
