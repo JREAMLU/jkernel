@@ -5,4 +5,5 @@ func init() {
 	InitLog()
 	InitRedis()
 	InitMysql()
+	InitIP2Region()
 }
