@@ -12,3 +12,7 @@ func ShortenIn(r mentity.Redirect) (uint64, error) {
 	}
 	return r.ID, nil
 }
+
+func ShortenInBatch() {
+
+}

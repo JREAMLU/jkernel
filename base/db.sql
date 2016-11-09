@@ -10,6 +10,6 @@ CREATE TABLE `redirect` (
     `created_at` INT(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT "创建时间timestamp|JREAMLU|2016-10-10",
     `updated_at` INT(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT "更新时间timestamp|JREAMLU|2016-10-10",
     PRIMARY KEY (`redirect_id`),
-    KEY `long_crc` (`long_crc`),
+    UNIQUE KEY `long_crc` (`long_crc`),
     KEY `short_url` (`short_url`)
 ) ENGINE = INNODB DEFAULT CHARSET=utf8 COMMENT="基建|短网址表|JREAMLU|2016-10-10";
