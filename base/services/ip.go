@@ -8,6 +8,7 @@ import (
 
 	"github.com/JREAMLU/core/com"
 	io "github.com/JREAMLU/core/inout"
+	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/JREAMLU/jkernel/base/services/entity"
 	"github.com/astaxie/beego/validation"
 	"github.com/pquerna/ffjson/ffjson"
@@ -56,6 +57,7 @@ func getIPsInfo(jctx jcontext.Context, ipInfo *IPInfo) (map[string]interface{}, 
 	}
 	var ipResult = make(map[string]interface{})
 	for k, v := range ip {
+		atom.Mu.Lock()
 		ipResult[k] = map[string]interface{}{
 			"cityID":   v.CityId,
 			"country":  v.Country,
@@ -64,6 +66,7 @@ func getIPsInfo(jctx jcontext.Context, ipInfo *IPInfo) (map[string]interface{}, 
 			"city":     v.City,
 			"isp":      v.ISP,
 		}
+		atom.Mu.Unlock()
 	}
 	return ipResult, nil
 }

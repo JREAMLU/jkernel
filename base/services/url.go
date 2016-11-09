@@ -45,7 +45,7 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 	ip = data["headermap"].(http.Header)["X-Forwarded-For"][0]
 	ch, err := io.InputParamsCheck(jctx, data, &r.Data)
 	if err != nil {
-		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", ch.RequestID)
+		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
 	list := shorten(jctx, r)
@@ -63,7 +63,7 @@ func shorten(jctx jcontext.Context, r *Url) map[string]interface{} {
 	for _, val := range r.Data.Urls {
 		shortUrl := atom.GetShortenUrl(val.LongURL)
 
-		short, err := setDB(jctx, val.LongURL, shortUrl)
+		short, err := setDB(val.LongURL, shortUrl)
 		if err != nil {
 			beego.Info(jctx.Value("requestID").(string), ":", "setDB error: ", err)
 		}
@@ -74,7 +74,7 @@ func shorten(jctx jcontext.Context, r *Url) map[string]interface{} {
 	return list
 }
 
-func setDB(jctx jcontext.Context, origin string, short string) (string, error) {
+func setDB(origin string, short string) (string, error) {
 	reply, err := mredis.ShortenHGet(origin)
 	if err != nil && err.Error() != "redigo: nil returned" {
 		return "", err
@@ -93,15 +93,17 @@ func setDB(jctx jcontext.Context, origin string, short string) (string, error) {
 
 		_, err := mmysql.ShortenIn(redirect)
 		if err != nil {
-			beego.Error(jctx.Value("requestID").(string), ":", "setDB error: ", err)
 			return "", err
 		}
-
 		_, err = mredis.ShortenHSet(origin, short)
 		if err != nil {
 			return "", err
 		}
-		mredis.ExpandHSet(short, origin)
+		_, err = mredis.ExpandHSet(short, origin)
+		if err != nil {
+			return "", err
+		}
+
 		return short, nil
 	}
 	return reply, nil
@@ -113,7 +115,7 @@ func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (http
 
 	ch, err := io.InputParamsCheck(jctx, data, ue)
 	if err != nil {
-		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", ch.RequestID)
+		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
 	list := expand(jctx, &ue)
