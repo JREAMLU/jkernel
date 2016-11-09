@@ -4,7 +4,9 @@ import (
 	jcontext "context"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/JREAMLU/core/com"
 	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/services/entity"
 	"github.com/astaxie/beego/validation"
@@ -21,31 +23,47 @@ type IPInfo struct {
 func (r *IP) Valid(v *validation.Validation) {}
 
 func (r *IP) IPsInfo(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
-	ffjson.Unmarshal(data["body"].([]byte), r)
 	var ipInfo IPInfo
 	ffjson.Unmarshal([]byte(data["querystrjson"].(string)), &ipInfo)
 
 	ch, err := io.InputParamsCheck(jctx, data, ipInfo)
 	if err != nil {
-		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", ch.RequestID)
+		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	fmt.Println("<<<<<<<<<<<", ipInfo.IPs)
-	list := getIPsInfo(jctx, &ipInfo)
+	list, err := getIPsInfo(jctx, &ipInfo)
+	if err != nil {
+		return http.StatusExpectationFailed, io.Fail(err.Error(), "LOGICILLEGAL", jctx.Value("requestID").(string))
+	}
 
 	var datalist entity.DataList
 	datalist.List = list
 	datalist.Total = len(list)
 
-	return http.StatusCreated, io.Suc(
-		datalist,
-		ch.RequestID,
-	)
+	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
 
-func getIPsInfo(jctx jcontext.Context, ipInfo *IPInfo) map[string]interface{} {
-	// fmt.Println("<<<<<<<<", ipInfo.IPs[0], []string{"127.0.0.1", "119.75.218.70"})
-	// ip, err := com.Query(ipInfo.IPs, "memory")
-	// fmt.Println(ip, err)
-	return nil
+func getIPsInfo(jctx jcontext.Context, ipInfo *IPInfo) (map[string]interface{}, error) {
+	var ipList []string
+	ips := strings.Split(ipInfo.IPs[0], ",")
+	for _, ip := range ips {
+		fmt.Println(ip)
+		ipList = append(ipList, ip)
+	}
+	ip, err := com.Query(ipList, "memory")
+	if err != nil {
+		return nil, err
+	}
+	var ipResult = make(map[string]interface{})
+	for k, v := range ip {
+		ipResult[k] = map[string]interface{}{
+			"cityID":   v.CityId,
+			"country":  v.Country,
+			"region":   v.Region,
+			"province": v.Province,
+			"city":     v.City,
+			"isp":      v.ISP,
+		}
+	}
+	return ipResult, nil
 }

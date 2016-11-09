@@ -45,11 +45,7 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 	ip = data["headermap"].(http.Header)["X-Forwarded-For"][0]
 	ch, err := io.InputParamsCheck(jctx, data, &r.Data)
 	if err != nil {
-		return http.StatusExpectationFailed, io.Fail(
-			ch.Message,
-			"DATAPARAMSILLEGAL",
-			ch.RequestID,
-		)
+		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", ch.RequestID)
 	}
 
 	list := shorten(jctx, r)
@@ -58,10 +54,7 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 	datalist.List = list
 	datalist.Total = len(list)
 
-	return http.StatusCreated, io.Suc(
-		datalist,
-		ch.RequestID,
-	)
+	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
 
 func shorten(jctx jcontext.Context, r *Url) map[string]interface{} {
@@ -120,11 +113,7 @@ func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (http
 
 	ch, err := io.InputParamsCheck(jctx, data, ue)
 	if err != nil {
-		return http.StatusExpectationFailed, io.Fail(
-			ch.Message,
-			"DATAPARAMSILLEGAL",
-			ch.RequestID,
-		)
+		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", ch.RequestID)
 	}
 
 	list := expand(jctx, &ue)
@@ -133,10 +122,7 @@ func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (http
 	datalist.List = list
 	datalist.Total = len(list)
 
-	return http.StatusCreated, io.Suc(
-		datalist,
-		ch.RequestID,
-	)
+	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
 
 func expand(jctx jcontext.Context, ue *UrlExpand) map[string]interface{} {
