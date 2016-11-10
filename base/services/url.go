@@ -104,7 +104,6 @@ func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 	}
 	var notExistRedirectList []mentity.Redirect
 	var notExistRedirectListCache []interface{}
-	//TODO redis没有 去mysql查 mysql存在的就插redis
 	for _, v := range redirects {
 		for _, v1 := range notExistShortenSlice {
 			if v.LongUrl == v1 {
@@ -116,6 +115,7 @@ func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 		}
 	}
 	if len(notExistRedirectList) > 0 {
+		//TODO redis没有 去mysql查 mysql存在的就插redis
 		//mysql batch
 		tx := mysql.X.Begin()
 		err = mmysql.ShortenInBatch(notExistRedirectList, tx)
