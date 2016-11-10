@@ -75,6 +75,7 @@ func shorten(jctx jcontext.Context, r *Url) (map[string]interface{}, error) {
 }
 
 func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
+	//TODO 增加条数限制
 	var longUrls []interface{}
 	for _, v := range redirects {
 		longUrls = append(longUrls, v.LongUrl)
