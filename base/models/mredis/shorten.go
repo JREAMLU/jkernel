@@ -1,6 +1,8 @@
 package mredis
 
 import (
+	"fmt"
+
 	"github.com/JREAMLU/core/db/redigos"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/astaxie/beego"
@@ -45,6 +47,15 @@ func ShortenHMGet(origin []interface{}) (list map[string]string, err error) {
 		atom.Mu.Unlock()
 	}
 	return list, err
+}
+
+func ShortenHMSet(url []interface{}) (reply string, err error) {
+	params := append([]interface{}{shortenKey}, url...)
+	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
+	reply, err = redis.String(conn.Do("HMSET", params...))
+	conn.Close()
+	fmt.Println("<<<<<<<<<<", reply, err)
+	return reply, err
 }
 
 func ExpandHSet(short string, origin string) (reply int64, err error) {

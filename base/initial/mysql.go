@@ -1,7 +1,7 @@
 package initial
 
 import (
-	"git.corp.plu.cn/phpgo/core/mysql"
+	"github.com/JREAMLU/core/db/mysql"
 	"github.com/astaxie/beego"
 )
 

@@ -9,13 +9,17 @@ import (
 	"time"
 
 	"github.com/JREAMLU/core/com"
+	"github.com/JREAMLU/core/db/mysql"
+	"github.com/JREAMLU/core/global"
 	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/models/mentity"
+	"github.com/JREAMLU/jkernel/base/models/mmysql"
 	"github.com/JREAMLU/jkernel/base/models/mredis"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/JREAMLU/jkernel/base/services/entity"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
+	"github.com/beego/i18n"
 	"github.com/pquerna/ffjson/ffjson"
 )
 
@@ -48,7 +52,11 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	list := shorten(jctx, r)
+	list, err := shorten(jctx, r)
+	if err != nil {
+		beego.Info(jctx.Value("requestID").(string), ":", "shorten error: ", err)
+		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.SHORTENILLEGAL"), "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
+	}
 
 	var datalist entity.DataList
 	datalist.List = list
@@ -57,11 +65,13 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
 
-func shorten(jctx jcontext.Context, r *Url) map[string]interface{} {
-	list := make(map[string]interface{})
+func shorten(jctx jcontext.Context, r *Url) (map[string]interface{}, error) {
 	redirects := getRedirects(r)
-	setDB(redirects)
-	return list
+	list, err := setDB(redirects)
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
 }
 
 func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
@@ -75,6 +85,7 @@ func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 	}
 	var notExistShortenSlice []interface{}
 	var existShortenMap = make(map[string]interface{})
+	var notExistShortenMap = make(map[string]interface{})
 	for k, v := range shortens {
 		if v == "" {
 			notExistShortenSlice = append(notExistShortenSlice, k)
@@ -82,17 +93,39 @@ func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 			existShortenMap[k] = v
 		}
 	}
-	for k, v := range redirects {
+	var notExistRedirectList []mentity.Redirect
+	var notExistRedirectListCache []interface{}
+	//TODO redis没有 去mysql查 mysql存在的就插redis
+	for _, v := range redirects {
 		for _, v1 := range notExistShortenSlice {
-			if v.LongUrl != v1 {
-				redirects = append(redirects[:k], redirects[k+1:]...)
+			if v.LongUrl == v1 {
+				notExistRedirectList = append(notExistRedirectList, v)
+				notExistRedirectListCache = append(notExistRedirectListCache, v.LongUrl)
+				notExistRedirectListCache = append(notExistRedirectListCache, v.ShortUrl)
+				notExistShortenMap[v.LongUrl] = v.ShortUrl
 			}
 		}
 	}
-	fmt.Println(notExistShortenSlice, existShortenMap, redirects)
-	//批量插mysql
-	//批量插redis
-	return nil, nil
+	if len(notExistRedirectList) > 0 {
+		//mysql batch
+		tx := mysql.X.Begin()
+		err = mmysql.ShortenInBatch(notExistRedirectList, tx)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		//批量插redis
+		_, err = mredis.ShortenHMSet(notExistRedirectListCache)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		tx.Commit()
+	}
+	shortenMap := com.MapMerge(existShortenMap, notExistShortenMap)
+	fmt.Println("<<<<", shortenMap)
+
+	return shortenMap, nil
 }
 
 func getRedirects(r *Url) []mentity.Redirect {

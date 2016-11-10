@@ -7,10 +7,13 @@ import (
 	"strings"
 
 	"github.com/JREAMLU/core/com"
+	"github.com/JREAMLU/core/global"
 	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/JREAMLU/jkernel/base/services/entity"
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
+	"github.com/beego/i18n"
 	"github.com/pquerna/ffjson/ffjson"
 )
 
@@ -34,7 +37,8 @@ func (r *IP) IPsInfo(jctx jcontext.Context, data map[string]interface{}) (httpSt
 
 	list, err := getIPsInfo(jctx, &ipInfo)
 	if err != nil {
-		return http.StatusExpectationFailed, io.Fail(err.Error(), "LOGICILLEGAL", jctx.Value("requestID").(string))
+		beego.Info(jctx.Value("requestID").(string), ":", "getIPsInfo error: ", err)
+		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "ip.IPSINFOILLEGAL"), "LOGICILLEGAL", jctx.Value("requestID").(string))
 	}
 
 	var datalist entity.DataList
