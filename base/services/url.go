@@ -74,6 +74,14 @@ func shorten(jctx jcontext.Context, r *Url) (map[string]interface{}, error) {
 	return list, nil
 }
 
+//TODO
+//增加条数限制
+// redis没有 但mysql有 要再插入redis
+// noexist redis
+// exist redis
+// exist mysql
+// 将mysql的exist放入 redis的noexist返回
+// 多了select mysql, hmset redis
 func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 	//TODO 增加条数限制
 	var longUrls []interface{}
