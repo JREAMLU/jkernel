@@ -116,9 +116,30 @@ func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 	}
 	if len(notExistRedirectList) > 0 {
 		//TODO redis没有 去mysql查 mysql存在的就插redis
+		var longCrc []uint64
+		for _, v := range notExistRedirectList {
+			longCrc = append(longCrc, v.LongCrc)
+		}
+		inShorten, err := mmysql.GetShortens(longCrc)
+		if err != nil {
+			return nil, err
+		}
+		var nowNotExistRedirectList []mentity.Redirect
+		for _, v := range notExistRedirectList {
+			for _, v1 := range inShorten {
+				if v.LongUrl != v1.LongUrl {
+					//notExistRedirectList里将inShorten去掉
+					nowNotExistRedirectList = append(nowNotExistRedirectList, v)
+				} else {
+					//notExistRedirectListCache里将inShorten增加
+					notExistRedirectListCache = append(notExistRedirectListCache, v.ShortUrl)
+				}
+			}
+		}
+		//update existShortenMap, notExistShortenMap
 		//mysql batch
 		tx := mysql.X.Begin()
-		err = mmysql.ShortenInBatch(notExistRedirectList, tx)
+		err = mmysql.ShortenInBatch(nowNotExistRedirectList, tx)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
