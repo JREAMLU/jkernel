@@ -80,7 +80,7 @@ func shorten(jctx jcontext.Context, r *Url) (map[string]interface{}, error) {
 // noexist redis
 // exist redis
 // exist mysql
-// 将mysql的exist放入 redis的noexist返回
+// 将mysql的exist替换 redis的noexist返回
 // 多了select mysql, hmset redis
 func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 	//TODO 增加条数限制
@@ -125,8 +125,9 @@ func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 			return nil, err
 		}
 		var nowNotExistRedirectList []mentity.Redirect
-		for _, v := range notExistRedirectList {
-			for _, v1 := range inShorten {
+		//TODO 两数组去掉重复的 有问题
+		for _, v := range inShorten {
+			for _, v1 := range notExistRedirectList {
 				if v.LongUrl != v1.LongUrl {
 					//notExistRedirectList里将inShorten去掉
 					nowNotExistRedirectList = append(nowNotExistRedirectList, v)
@@ -136,7 +137,14 @@ func setDB(redirects []mentity.Redirect) (map[string]interface{}, error) {
 				}
 			}
 		}
-		//update existShortenMap, notExistShortenMap
+		//update notExistShortenMap
+		for _, v := range inShorten {
+			if _, ok := notExistShortenMap[v.LongUrl]; ok {
+				notExistShortenMap[v.LongUrl] = v.ShortUrl
+			}
+		}
+		fmt.Println("<<<<", nowNotExistRedirectList)
+		fmt.Println("<<<<", notExistRedirectListCache)
 		//mysql batch
 		tx := mysql.X.Begin()
 		err = mmysql.ShortenInBatch(nowNotExistRedirectList, tx)
