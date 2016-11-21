@@ -32,21 +32,26 @@ func ShortenHGet(origin string) (reply string, err error) {
 	return reply, err
 }
 
-func ShortenHMGet(origin []interface{}) (list map[string]string, err error) {
+//TODO 单独的功能 数据放到service层
+func ShortenHMGet(origin []interface{}) (shortens map[string]interface{}, emptys []interface{}, err error) {
 	params := append([]interface{}{shortenKey}, origin...)
 	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
 	reply, err := redis.Strings(conn.Do("HMGET", params...))
 	conn.Close()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	list = make(map[string]string)
+	shortens = make(map[string]interface{})
 	for k, v := range origin {
 		atom.Mu.Lock()
-		list[v.(string)] = reply[k]
+		if reply[k] != "" {
+			shortens[v.(string)] = reply[k]
+		} else {
+			emptys = append(emptys, v.(string))
+		}
 		atom.Mu.Unlock()
 	}
-	return list, err
+	return shortens, emptys, err
 }
 
 func ShortenHMSet(url []interface{}) (reply string, err error) {
