@@ -12,6 +12,7 @@ import (
 	"github.com/JREAMLU/core/global"
 	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/models/mentity"
+	"github.com/JREAMLU/jkernel/base/models/mmysql"
 	"github.com/JREAMLU/jkernel/base/models/mredis"
 	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/JREAMLU/jkernel/base/services/entity"
@@ -96,11 +97,18 @@ func shorten(r *Url) (map[string]interface{}, error) {
 
 func setDB(redirects []mentity.Redirect, r *Url) (map[string]interface{}, error) {
 	var shortenMap = make(map[string]interface{})
-	shortens, emptys, err := mredis.ShortenHMGet(r.Data.Urls)
-	fmt.Println(">>>", shortens, emptys)
+	reply, err := mredis.ShortenHMGet(r.Data.Urls)
 	if err != nil {
 		return nil, err
 	}
+	exist, notExistList, notExistLongCRCList := splitExistOrNot(r, reply)
+	fmt.Println(">>>>", exist, notExistList, notExistLongCRCList)
+
+	a, err := mmysql.GetShortens(notExistLongCRCList)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(">>>>", a, err)
 	// var notExistShortenSlice []interface{}
 	// var existShortenMap = make(map[string]interface{})
 	// var notExistShortenMap = make(map[string]interface{})
@@ -192,6 +200,25 @@ func getRedirects(r *Url) []mentity.Redirect {
 		redirects = append(redirects, redirect)
 	}
 	return redirects
+}
+
+func splitExistOrNot(r *Url, reply []string) (map[string]interface{}, []interface{}, []uint64) {
+	exist := make(map[string]interface{})
+	var notExistList []interface{}
+	var notExistLongCRCList []uint64
+	for key, url := range r.Data.Urls {
+		atom.Mu.Lock()
+		if reply[key] != "" {
+			exist[url.(string)] = reply[key]
+		} else {
+			crc := uint64(crc32.ChecksumIEEE([]byte(url.(string))))
+			exist[url.(string)] = crc
+			notExistList = append(notExistList, url.(string))
+			notExistLongCRCList = append(notExistLongCRCList, crc)
+		}
+		atom.Mu.Unlock()
+	}
+	return exist, notExistList, notExistLongCRCList
 }
 
 // func shorten(jctx jcontext.Context, r *Url) map[string]interface{} {

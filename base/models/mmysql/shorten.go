@@ -52,14 +52,14 @@ VALUES
 	return nil
 }
 
-func GetShortens(longCrc []uint64) (r []mentity.Redirect, err error) {
+func GetShortens(longCRC []uint64) (r []mentity.Redirect, err error) {
 	sql := `
 SELECT *
 FROM    redirect
 WHERE   long_crc IN (?)
 `
 
-	res := mysql.X.Raw(sql, longCrc).Scan(&r)
+	res := mysql.X.Raw(sql, longCRC).Scan(&r)
 	if res.Error != nil {
 		return r, res.Error
 	}

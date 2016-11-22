@@ -1,10 +1,7 @@
 package mredis
 
 import (
-	"fmt"
-
 	"github.com/JREAMLU/core/db/redigos"
-	"github.com/JREAMLU/jkernel/base/services/atom"
 	"github.com/astaxie/beego"
 	"github.com/garyburd/redigo/redis"
 )
@@ -32,34 +29,19 @@ func ShortenHGet(origin string) (reply string, err error) {
 	return reply, err
 }
 
-//TODO 单独的功能 数据放到service层
-func ShortenHMGet(origin []interface{}) (shortens map[string]interface{}, emptys []interface{}, err error) {
+func ShortenHMGet(origin []interface{}) (reply []string, err error) {
 	params := append([]interface{}{shortenKey}, origin...)
 	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
-	reply, err := redis.Strings(conn.Do("HMGET", params...))
+	reply, err = redis.Strings(conn.Do("HMGET", params...))
 	conn.Close()
-	if err != nil {
-		return nil, nil, err
-	}
-	shortens = make(map[string]interface{})
-	for k, v := range origin {
-		atom.Mu.Lock()
-		if reply[k] != "" {
-			shortens[v.(string)] = reply[k]
-		} else {
-			emptys = append(emptys, v.(string))
-		}
-		atom.Mu.Unlock()
-	}
-	return shortens, emptys, err
+	return reply, err
 }
 
-func ShortenHMSet(url []interface{}) (reply string, err error) {
-	params := append([]interface{}{shortenKey}, url...)
+func ShortenHMSet(originShort []interface{}) (reply string, err error) {
+	params := append([]interface{}{shortenKey}, originShort...)
 	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
 	reply, err = redis.String(conn.Do("HMSET", params...))
 	conn.Close()
-	fmt.Println("<<<<<<<<<<", reply, err)
 	return reply, err
 }
 
@@ -73,6 +55,22 @@ func ExpandHSet(short string, origin string) (reply int64, err error) {
 func ExpandHGet(short string) (reply string, err error) {
 	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
 	reply, err = redis.String(conn.Do("HGET", expandKey, short))
+	conn.Close()
+	return reply, err
+}
+
+func ExpandHMSet(shortOrigin []interface{}) (reply []string, err error) {
+	params := append([]interface{}{expandKey}, shortOrigin...)
+	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
+	reply, err = redis.Strings(conn.Do("HMSET", params...))
+	conn.Close()
+	return reply, err
+}
+
+func ExpandHMGet(short []interface{}) (reply string, err error) {
+	params := append([]interface{}{expandKey}, short...)
+	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
+	reply, err = redis.String(conn.Do("HMGET", params...))
 	conn.Close()
 	return reply, err
 }
