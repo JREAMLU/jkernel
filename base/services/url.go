@@ -22,18 +22,6 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 )
 
-// type Url struct {
-// 	Meta struct {
-// 		Auth string
-// 	} `json:"meta" valid:"Required"`
-// 	Data struct {
-// 		Urls []struct {
-// 			LongURL string `json:"long_url" valid:"Required"`
-// 			IP      string `json:"ip" valid:"IP"`
-// 		} `json:"urls" valid:"Required"`
-// 	} `json:"data" valid:"Required"`
-// }
-
 type Url struct {
 	Meta struct {
 		Auth string
