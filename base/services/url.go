@@ -2,13 +2,13 @@ package services
 
 import (
 	jcontext "context"
-	"fmt"
 	"hash/crc32"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/JREAMLU/core/com"
+	"github.com/JREAMLU/core/db/mysql"
 	"github.com/JREAMLU/core/global"
 	io "github.com/JREAMLU/core/inout"
 	"github.com/JREAMLU/jkernel/base/models/mentity"
@@ -87,191 +87,120 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 }
 
 func shorten(r *Url) (map[string]interface{}, error) {
-	redirects := getRedirects(r)
-	list, err := setDB(redirects, r)
+	list, err := setDB(r)
 	if err != nil {
 		return nil, err
 	}
 	return list, nil
 }
 
-func setDB(redirects []mentity.Redirect, r *Url) (map[string]interface{}, error) {
+func setDB(r *Url) (map[string]interface{}, error) {
 	var shortenMap = make(map[string]interface{})
 	reply, err := mredis.ShortenHMGet(r.Data.Urls)
 	if err != nil {
 		return nil, err
 	}
-	exist, notExistList, notExistLongCRCList := splitExistOrNot(r, reply)
-	fmt.Println(">>>>", exist, notExistList, notExistLongCRCList)
+	exist, notExistLongCRCList, notExistMapList := splitExistOrNot(r, reply)
+	if len(notExistLongCRCList) == 0 && len(notExistMapList) == 0 {
+		return exist, nil
+	}
 
-	a, err := mmysql.GetShortens(notExistLongCRCList)
+	existShortListInDB, err := mmysql.GetShortens(notExistLongCRCList)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(">>>>", a, err)
-	// var notExistShortenSlice []interface{}
-	// var existShortenMap = make(map[string]interface{})
-	// var notExistShortenMap = make(map[string]interface{})
-	// for k, v := range shortens {
-	// 	if v == "" {
-	// 		notExistShortenSlice = append(notExistShortenSlice, k)
-	// 	} else {
-	// 		existShortenMap[k] = v
-	// 	}
-	// }
-	// var notExistRedirectList []mentity.Redirect
-	// var notExistRedirectListCache []interface{}
-	// for _, v := range redirects {
-	// 	for _, v1 := range notExistShortenSlice {
-	// 		if v.LongUrl == v1 {
-	// 			notExistRedirectList = append(notExistRedirectList, v)
-	// 			notExistRedirectListCache = append(notExistRedirectListCache, v.LongUrl)
-	// 			notExistRedirectListCache = append(notExistRedirectListCache, v.ShortUrl)
-	// 			notExistShortenMap[v.LongUrl] = v.ShortUrl
-	// 		}
-	// 	}
-	// }
-	// if len(notExistRedirectList) > 0 {
-	// 	//TODO redis没有 去mysql查 mysql存在的就插redis
-	// 	var longCrc []uint64
-	// 	for _, v := range notExistRedirectList {
-	// 		longCrc = append(longCrc, v.LongCrc)
-	// 	}
-	// 	inShorten, err := mmysql.GetShortens(longCrc)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	var nowNotExistRedirectList []mentity.Redirect
-	// 	//TODO 两数组去掉重复的 有问题
-	// 	for _, v := range inShorten {
-	// 		for _, v1 := range notExistRedirectList {
-	// 			if v.LongUrl != v1.LongUrl {
-	// 				//notExistRedirectList里将inShorten去掉
-	// 				nowNotExistRedirectList = append(nowNotExistRedirectList, v)
-	// 			} else {
-	// 				//notExistRedirectListCache里将inShorten增加
-	// 				notExistRedirectListCache = append(notExistRedirectListCache, v.ShortUrl)
-	// 			}
-	// 		}
-	// 	}
-	// 	//update notExistShortenMap
-	// 	for _, v := range inShorten {
-	// 		if _, ok := notExistShortenMap[v.LongUrl]; ok {
-	// 			notExistShortenMap[v.LongUrl] = v.ShortUrl
-	// 		}
-	// 	}
-	// 	fmt.Println("<<<<", nowNotExistRedirectList)
-	// 	fmt.Println("<<<<", notExistRedirectListCache)
-	// 	//mysql batch
-	// 	tx := mysql.X.Begin()
-	// 	err = mmysql.ShortenInBatch(nowNotExistRedirectList, tx)
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 		return nil, err
-	// 	}
-	// 	//批量插redis
-	// 	_, err = mredis.ShortenHMSet(notExistRedirectListCache)
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 		return nil, err
-	// 	}
-	// 	tx.Commit()
-	// }
-	// shortenMap := com.MapMerge(existShortenMap, notExistShortenMap)
-	// fmt.Println("<<<<", shortenMap)
+	existQueue, existQueueShortenList, existQueueExpandList, notExistMapList := getAllData(existShortListInDB, notExistMapList)
+	if len(existQueue) == 0 {
+		return exist, nil
+	}
+
+	tx := mysql.X.Begin()
+	if len(notExistMapList) > 0 {
+		err = mmysql.ShortenInBatch(notExistMapList, tx)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	if len(existQueueShortenList) > 0 {
+		_, err = mredis.ShortenHMSet(existQueueShortenList)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	if len(existQueueExpandList) > 0 {
+		_, err = mredis.ExpandHMSet(existQueueExpandList)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	tx.Commit()
+
+	shortenMap = com.MapMerge(exist, existQueue)
 
 	return shortenMap, nil
 }
 
-func getRedirects(r *Url) []mentity.Redirect {
-	var redirects []mentity.Redirect
-	for _, url := range r.Data.Urls {
-		shortUrl := atom.GetShortenUrl(url.(string))
-		var redirect mentity.Redirect
-		redirect.LongUrl = url.(string)
-		redirect.ShortUrl = shortUrl
-		redirect.LongCrc = uint64(crc32.ChecksumIEEE([]byte(url.(string))))
-		redirect.ShortCrc = uint64(crc32.ChecksumIEEE([]byte(shortUrl)))
-		redirect.Status = NORMAL
-		redirect.CreatedByIP = uint64(com.Ip2Int(ip))
-		redirect.UpdateByIP = uint64(com.Ip2Int(ip))
-		redirect.CreateAT = uint64(time.Now().Unix())
-		redirect.UpdateAT = uint64(time.Now().Unix())
-		redirects = append(redirects, redirect)
-	}
-	return redirects
-}
-
-func splitExistOrNot(r *Url, reply []string) (map[string]interface{}, []interface{}, []uint64) {
+func splitExistOrNot(r *Url, reply []string) (map[string]interface{}, []uint64, []mentity.Redirect) {
 	exist := make(map[string]interface{})
-	var notExistList []interface{}
 	var notExistLongCRCList []uint64
+	var notExistMapList []mentity.Redirect
+	var redirect mentity.Redirect
 	for key, url := range r.Data.Urls {
 		atom.Mu.Lock()
 		if reply[key] != "" {
 			exist[url.(string)] = reply[key]
 		} else {
-			crc := uint64(crc32.ChecksumIEEE([]byte(url.(string))))
-			exist[url.(string)] = crc
-			notExistList = append(notExistList, url.(string))
-			notExistLongCRCList = append(notExistLongCRCList, crc)
+			longCrc := uint64(crc32.ChecksumIEEE([]byte(url.(string))))
+			shortUrl := atom.GetShortenUrl(url.(string))
+			shortCrc := uint64(crc32.ChecksumIEEE([]byte(shortUrl)))
+			notExistLongCRCList = append(notExistLongCRCList, longCrc)
+			redirect.LongUrl = url.(string)
+			redirect.ShortUrl = shortUrl
+			redirect.LongCrc = longCrc
+			redirect.ShortCrc = shortCrc
+			redirect.Status = NORMAL
+			redirect.CreatedByIP = uint64(com.Ip2Int(ip))
+			redirect.UpdateByIP = uint64(com.Ip2Int(ip))
+			redirect.CreateAT = uint64(time.Now().Unix())
+			redirect.UpdateAT = uint64(time.Now().Unix())
+			notExistMapList = append(notExistMapList, redirect)
 		}
 		atom.Mu.Unlock()
 	}
-	return exist, notExistList, notExistLongCRCList
+	return exist, notExistLongCRCList, notExistMapList
 }
 
-// func shorten(jctx jcontext.Context, r *Url) map[string]interface{} {
-// 	list := make(map[string]interface{})
-//
-// 	for _, val := range r.Data.Urls {
-// 		shortUrl := atom.GetShortenUrl(val.LongURL)
-//
-// 		short, err := setDB(val.LongURL, shortUrl)
-// 		if err != nil {
-// 			beego.Info(jctx.Value("requestID").(string), ":", "setDB error: ", err)
-// 		}
-//
-// 		list[val.LongURL] = beego.AppConfig.String("ShortenDomain") + short
-// 	}
-//
-// 	return list
-// }
-//
-// func setDB(origin string, short string) (string, error) {
-// 	reply, err := mredis.ShortenHGet(origin)
-// 	if err != nil && err.Error() != "redigo: nil returned" {
-// 		return "", err
-// 	}
-// 	if reply == "" {
-// 		var redirect mentity.Redirect
-// 		redirect.LongUrl = origin
-// 		redirect.ShortUrl = short
-// 		redirect.LongCrc = uint64(crc32.ChecksumIEEE([]byte(origin)))
-// 		redirect.ShortCrc = uint64(crc32.ChecksumIEEE([]byte(short)))
-// 		redirect.Status = 1
-// 		redirect.CreatedByIP = uint64(com.Ip2Int(ip))
-// 		redirect.UpdateByIP = uint64(com.Ip2Int(ip))
-// 		redirect.CreateAT = uint64(time.Now().Unix())
-// 		redirect.UpdateAT = uint64(time.Now().Unix())
-//
-// 		_, err := mmysql.ShortenIn(redirect)
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		_, err = mredis.ShortenHSet(origin, short)
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		_, err = mredis.ExpandHSet(short, origin)
-// 		if err != nil {
-// 			return "", err
-// 		}
-//
-// 		return short, nil
-// 	}
-// 	return reply, nil
-// }
+func getAllData(existShortListInDB []mentity.Redirect, notExistMapList []mentity.Redirect) (map[string]interface{}, []interface{}, []interface{}, []mentity.Redirect) {
+	existQueue := make(map[string]interface{})
+	var existQueueShortenList []interface{}
+	var existQueueExpandList []interface{}
+	for _, existShortListInDBVal := range existShortListInDB {
+		existQueue[existShortListInDBVal.LongUrl] = existShortListInDBVal.ShortUrl
+		existQueueShortenList = append(existQueueShortenList, existShortListInDBVal.LongUrl)
+		existQueueShortenList = append(existQueueShortenList, existShortListInDBVal.ShortUrl)
+		existQueueExpandList = append(existQueueExpandList, existShortListInDBVal.ShortUrl)
+		existQueueExpandList = append(existQueueExpandList, existShortListInDBVal.LongUrl)
+		for k, notExistMapListVal := range notExistMapList {
+			if existShortListInDBVal.LongUrl == notExistMapListVal.LongUrl {
+				notExistMapList = append(notExistMapList[:k], notExistMapList[k+1:]...)
+			}
+		}
+	}
+	for _, notExistMapListVal := range notExistMapList {
+		existQueue[notExistMapListVal.LongUrl] = notExistMapListVal.ShortUrl
+		existQueueShortenList = append(existQueueShortenList, notExistMapListVal.LongUrl)
+		existQueueShortenList = append(existQueueShortenList, notExistMapListVal.ShortUrl)
+		existQueueExpandList = append(existQueueExpandList, notExistMapListVal.ShortUrl)
+		existQueueExpandList = append(existQueueExpandList, notExistMapListVal.LongUrl)
+	}
+	return existQueue, existQueueShortenList, existQueueExpandList, notExistMapList
+}
 
 func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
 	var ue UrlExpand

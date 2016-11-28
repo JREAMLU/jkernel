@@ -54,7 +54,8 @@ VALUES
 
 func GetShortens(longCRC []uint64) (r []mentity.Redirect, err error) {
 	sql := `
-SELECT *
+SELECT  redirect_id, long_url, short_url, long_crc, short_crc, status, 
+        created_by_ip, updated_by_ip, created_at, updated_at
 FROM    redirect
 WHERE   long_crc IN (?)
 `
