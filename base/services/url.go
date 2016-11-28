@@ -140,9 +140,10 @@ func splitExistOrNot(r *Url, reply []string) (map[string]interface{}, []uint64, 
 	var notExistMapList []mentity.Redirect
 	var redirect mentity.Redirect
 	for key, url := range r.Data.Urls {
-		atom.Mu.Lock()
 		if reply[key] != "" {
+			atom.Mu.Lock()
 			exist[url.(string)] = reply[key]
+			atom.Mu.Unlock()
 		} else {
 			longCrc := uint64(crc32.ChecksumIEEE([]byte(url.(string))))
 			shortUrl := atom.GetShortenUrl(url.(string))
@@ -169,7 +170,9 @@ func getAllData(existShortListInDB []mentity.Redirect, notExistMapList []mentity
 	var existQueueShortenList []interface{}
 	var existQueueExpandList []interface{}
 	for _, existShortListInDBVal := range existShortListInDB {
+		atom.Mu.Lock()
 		existQueue[existShortListInDBVal.LongUrl] = existShortListInDBVal.ShortUrl
+		atom.Mu.Unlock()
 		existQueueShortenList = append(existQueueShortenList, existShortListInDBVal.LongUrl)
 		existQueueShortenList = append(existQueueShortenList, existShortListInDBVal.ShortUrl)
 		existQueueExpandList = append(existQueueExpandList, existShortListInDBVal.ShortUrl)
@@ -181,7 +184,9 @@ func getAllData(existShortListInDB []mentity.Redirect, notExistMapList []mentity
 		}
 	}
 	for _, notExistMapListVal := range notExistMapList {
+		atom.Mu.Lock()
 		existQueue[notExistMapListVal.LongUrl] = notExistMapListVal.ShortUrl
+		atom.Mu.Unlock()
 		existQueueShortenList = append(existQueueShortenList, notExistMapListVal.LongUrl)
 		existQueueShortenList = append(existQueueShortenList, notExistMapListVal.ShortUrl)
 		existQueueExpandList = append(existQueueExpandList, notExistMapListVal.ShortUrl)
