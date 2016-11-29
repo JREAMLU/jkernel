@@ -54,10 +54,12 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 	ip = data["headermap"].(http.Header)["X-Forwarded-For"][0]
 	ch, err := io.InputParamsCheck(jctx, data, &r.Data)
 	if err != nil {
+		beego.Info(jctx.Value("requestID").(string), ":", "shorten error: ", err)
 		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
 	if len(r.Data.Urls) > 10 {
+		beego.Info(jctx.Value("requestID").(string), ":", "shorten error: ", err)
 		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.NUMBERLIMIT"), "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
