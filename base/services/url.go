@@ -134,10 +134,8 @@ func setDB(r *Url) (map[string]interface{}, error) {
 	return shortenMap, nil
 }
 
-func splitExistOrNot(r *Url, reply []string) (map[string]interface{}, []uint64, []mentity.Redirect) {
-	exist := make(map[string]interface{})
-	var notExistLongCRCList []uint64
-	var notExistMapList []mentity.Redirect
+func splitExistOrNot(r *Url, reply []string) (exist map[string]interface{}, notExistLongCRCList []uint64, notExistMapList []mentity.Redirect) {
+	exist = make(map[string]interface{})
 	var redirect mentity.Redirect
 	for key, url := range r.Data.Urls {
 		if reply[key] != "" {
@@ -165,10 +163,8 @@ func splitExistOrNot(r *Url, reply []string) (map[string]interface{}, []uint64, 
 	return exist, notExistLongCRCList, notExistMapList
 }
 
-func getAllData(existShortListInDB []mentity.Redirect, notExistMapList []mentity.Redirect) (map[string]interface{}, []interface{}, []interface{}, []mentity.Redirect) {
-	existQueue := make(map[string]interface{})
-	var existQueueShortenList []interface{}
-	var existQueueExpandList []interface{}
+func getAllData(existShortListInDB []mentity.Redirect, notExistMapList []mentity.Redirect) (existQueue map[string]interface{}, existQueueShortenList []interface{}, existQueueExpandList []interface{}, notExistMapLists []mentity.Redirect) {
+	existQueue = make(map[string]interface{})
 	for _, existShortListInDBVal := range existShortListInDB {
 		atom.Mu.Lock()
 		existQueue[existShortListInDBVal.LongUrl] = existShortListInDBVal.ShortUrl
