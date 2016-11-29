@@ -54,19 +54,19 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 	ip = data["headermap"].(http.Header)["X-Forwarded-For"][0]
 	ch, err := io.InputParamsCheck(jctx, data, &r.Data)
 	if err != nil {
-		beego.Info(jctx.Value("requestID").(string), ":", "shorten error: ", err)
+		beego.Info(jctx.Value("requestID").(string), ":", "goShorten error: ", err)
 		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
 	if len(r.Data.Urls) > 10 {
-		beego.Info(jctx.Value("requestID").(string), ":", "shorten error: ", err)
+		beego.Info(jctx.Value("requestID").(string), ":", "goShorten error: ", err)
 		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.NUMBERLIMIT"), "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
 	list, err := shorten(r)
 	if err != nil {
-		beego.Info(jctx.Value("requestID").(string), ":", "shorten error: ", err)
-		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.SHORTENILLEGAL"), "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
+		beego.Info(jctx.Value("requestID").(string), ":", "goShorten error: ", err)
+		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.SHORTENILLEGAL"), "LOGICILLEGAL", jctx.Value("requestID").(string))
 	}
 
 	var datalist entity.DataList
@@ -99,7 +99,7 @@ func setDB(r *Url) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	existQueue, existQueueShortenList, existQueueExpandList, notExistMapList := getAllData(existShortListInDB, notExistMapList)
+	existQueue, existQueueShortenList, existQueueExpandList, notExistMapList := getShortenData(existShortListInDB, notExistMapList)
 	if len(existQueue) == 0 {
 		return exist, nil
 	}
@@ -165,7 +165,7 @@ func splitExistOrNot(r *Url, reply []string) (exist map[string]interface{}, notE
 	return exist, notExistLongCRCList, notExistMapList
 }
 
-func getAllData(existShortListInDB []mentity.Redirect, notExistMapList []mentity.Redirect) (existQueue map[string]interface{}, existQueueShortenList []interface{}, existQueueExpandList []interface{}, notExistMapLists []mentity.Redirect) {
+func getShortenData(existShortListInDB []mentity.Redirect, notExistMapList []mentity.Redirect) (existQueue map[string]interface{}, existQueueShortenList []interface{}, existQueueExpandList []interface{}, notExistMapLists []mentity.Redirect) {
 	existQueue = make(map[string]interface{})
 	for _, existShortListInDBVal := range existShortListInDB {
 		atom.Mu.Lock()
@@ -199,10 +199,15 @@ func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (http
 
 	ch, err := io.InputParamsCheck(jctx, data, ue)
 	if err != nil {
+		beego.Info(jctx.Value("requestID").(string), ":", "goExpand error: ", err)
 		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	list := expand(jctx, &ue)
+	list, err := expand(jctx, &ue)
+	if err != nil {
+		beego.Info(jctx.Value("requestID").(string), ":", "goExpand error: ", err)
+		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.EXPANDILLEGAL"), "LOGICILLEGAL", jctx.Value("requestID").(string))
+	}
 
 	var datalist entity.DataList
 	datalist.List = list
@@ -211,16 +216,30 @@ func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (http
 	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
 
-func expand(jctx jcontext.Context, ue *UrlExpand) map[string]interface{} {
+func expand(jctx jcontext.Context, ue *UrlExpand) (list map[string]interface{}, err error) {
+	shortenList := shortenList(ue.Shorten[0])
+	expandList, err := mredis.ExpandHMGet(shortenList)
+	if err != nil {
+		return nil, err
+	}
+	list = getExpandData(shortenList, expandList)
+	return list, nil
+}
+
+func shortenList(shortens string) []interface{} {
+	shortensListStr := strings.Split(shortens, ",")
+	var shortenList = make([]interface{}, len(shortensListStr))
+	for k, shroten := range shortensListStr {
+		shortenList[k] = shroten
+	}
+	return shortenList
+}
+
+func getExpandData(shortenList []interface{}, expandList []string) map[string]interface{} {
 	list := make(map[string]interface{})
-	shortens := ue.Shorten[0]
-	for _, shorten := range strings.Split(shortens, ",") {
-		reply, err := mredis.ExpandHGet(shorten)
-		if err != nil {
-			beego.Info(jctx.Value("requestID").(string), ":", "expand error: ", err)
-		}
+	for key, url := range expandList {
 		atom.Mu.Lock()
-		list[shorten] = reply
+		list[shortenList[key].(string)] = url
 		atom.Mu.Unlock()
 	}
 	return list

@@ -67,10 +67,10 @@ func ExpandHMSet(shortOrigin []interface{}) (reply string, err error) {
 	return reply, err
 }
 
-func ExpandHMGet(short []interface{}) (reply string, err error) {
+func ExpandHMGet(short []interface{}) (reply []string, err error) {
 	params := append([]interface{}{expandKey}, short...)
 	conn := redigos.GetRedisClient(REDISSERVER_BASE, true)
-	reply, err = redis.String(conn.Do("HMGET", params...))
+	reply, err = redis.Strings(conn.Do("HMGET", params...))
 	conn.Close()
 	return reply, err
 }
