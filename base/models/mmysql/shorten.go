@@ -11,8 +11,22 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+const BASE = "base"
+
+// func ShortenIn(r mentity.Redirect) (uint64, error) {
+// 	res := mysql.X.Create(&r)
+// 	if res.Error != nil {
+// 		return 0, res.Error
+// 	}
+// 	return r.ID, nil
+// }
+
 func ShortenIn(r mentity.Redirect) (uint64, error) {
-	res := mysql.X.Create(&r)
+	x, err := mysql.GetXS(BASE)
+	if err != nil {
+		return 0, err
+	}
+	res := x.Create(&r)
 	if res.Error != nil {
 		return 0, res.Error
 	}
@@ -60,9 +74,29 @@ FROM    redirect
 WHERE   long_crc IN (?)
 `
 
-	res := mysql.X.Raw(sql, longCRC).Scan(&r)
+	x, err := mysql.GetXS(BASE)
+	if err != nil {
+		return nil, err
+	}
+
+	res := x.Raw(sql, longCRC).Scan(&r)
 	if res.Error != nil {
 		return r, res.Error
 	}
 	return r, nil
 }
+
+// func GetShortens(longCRC []uint64) (r []mentity.Redirect, err error) {
+// 	sql := `
+// SELECT  redirect_id, long_url, short_url, long_crc, short_crc, status,
+//         created_by_ip, updated_by_ip, created_at, updated_at
+// FROM    redirect
+// WHERE   long_crc IN (?)
+// `
+//
+// 	res := mysql.X.Raw(sql, longCRC).Scan(&r)
+// 	if res.Error != nil {
+// 		return r, res.Error
+// 	}
+// 	return r, nil
+// }

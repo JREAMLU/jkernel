@@ -104,7 +104,11 @@ func setDB(r *Url) (map[string]interface{}, error) {
 		return exist, nil
 	}
 
-	tx := mysql.X.Begin()
+	x, err := mysql.GetXS(mmysql.BASE)
+	if err != nil {
+		return nil, err
+	}
+	tx := x.Begin()
 	if len(notExistMapList) > 0 {
 		err = mmysql.ShortenInBatch(notExistMapList, tx)
 		if err != nil {
@@ -160,7 +164,6 @@ func splitExistOrNot(r *Url, reply []string) (exist map[string]interface{}, notE
 			redirect.UpdateAT = uint64(time.Now().Unix())
 			notExistMapList = append(notExistMapList, redirect)
 		}
-		atom.Mu.Unlock()
 	}
 	return exist, notExistLongCRCList, notExistMapList
 }
