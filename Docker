@@ -1,0 +1,1 @@
+docker run -dit -v /data/gowww/jkernel/:/data/gowww/jkernel godeploy:v4
