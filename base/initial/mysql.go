@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego"
 )
 
+// InitMysql init mysql
 func InitMysql() {
 	var gconf mysql.GormConf
 	gconf.Driver = beego.AppConfig.String("mysql.driver")

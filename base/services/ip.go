@@ -17,15 +17,19 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 )
 
+// IP ip service
 type IP struct {
 }
 
+// IPInfo ip info struct
 type IPInfo struct {
 	IPs []string `json:"ips" valid:"Required"`
 }
 
+// Valid valid struct
 func (r *IP) Valid(v *validation.Validation) {}
 
+// IPsInfo is list info
 func (r *IP) IPsInfo(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
 	var ipInfo IPInfo
 	ffjson.Unmarshal([]byte(data["querystrjson"].(string)), &ipInfo)

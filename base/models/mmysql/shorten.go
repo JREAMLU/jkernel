@@ -11,6 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// BASE mysql alias name
 const BASE = "base"
 
 // func ShortenIn(r mentity.Redirect) (uint64, error) {
@@ -21,6 +22,7 @@ const BASE = "base"
 // 	return r.ID, nil
 // }
 
+// ShortenIn insert shorten
 func ShortenIn(r mentity.Redirect) (uint64, error) {
 	x, err := mysql.GetXS(BASE)
 	if err != nil {
@@ -33,6 +35,7 @@ func ShortenIn(r mentity.Redirect) (uint64, error) {
 	return r.ID, nil
 }
 
+// ShortenInBatch insert shorten batch
 func ShortenInBatch(redirects []mentity.Redirect, tx *gorm.DB) error {
 	if len(redirects) == 0 {
 		return errors.New(i18n.Tr(global.Lang, "url.SHORTENINBATCHILLEGAL"))
@@ -49,8 +52,8 @@ VALUES
 		if k+1 != len(redirects) {
 			sql = com.StringJoin(sql, ",")
 		}
-		params = append(params, redirect.LongUrl)
-		params = append(params, redirect.ShortUrl)
+		params = append(params, redirect.LongURL)
+		params = append(params, redirect.ShortURL)
 		params = append(params, redirect.LongCrc)
 		params = append(params, redirect.ShortCrc)
 		params = append(params, redirect.Status)
@@ -66,6 +69,7 @@ VALUES
 	return nil
 }
 
+// GetShortens select shorten list
 func GetShortens(longCRC []uint64) (r []mentity.Redirect, err error) {
 	sql := `
 SELECT  redirect_id, long_url, short_url, long_crc, short_crc, status, 

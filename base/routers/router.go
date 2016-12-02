@@ -1,3 +1,4 @@
+// Package routers jkernel
 // @APIVersion 1.0.0
 // @Title beego Test API
 // @Description beego has a very cool tools to autogenerate documents for your API
@@ -29,10 +30,10 @@ func init() {
 			return false
 		}),
 		beego.NSNamespace("url",
-			beego.NSRouter("/goshorten.json", &controllers.UrlController{}, "post:GoShorten"),
-			beego.NSRouter("/goshorten", &controllers.UrlController{}, "post:GoShorten"),
-			beego.NSRouter("/goexpand.json", &controllers.UrlController{}, "get:GoExpand"),
-			beego.NSRouter("/goexpand", &controllers.UrlController{}, "get:GoExpand"),
+			beego.NSRouter("/goshorten.json", &controllers.URLController{}, "post:GoShorten"),
+			beego.NSRouter("/goshorten", &controllers.URLController{}, "post:GoShorten"),
+			beego.NSRouter("/goexpand.json", &controllers.URLController{}, "get:GoExpand"),
+			beego.NSRouter("/goexpand", &controllers.URLController{}, "get:GoExpand"),
 		),
 		beego.NSNamespace("ip",
 			beego.NSRouter("/info.json", &controllers.IPController{}, "get:Info"),

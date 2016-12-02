@@ -14,13 +14,19 @@ import (
 )
 
 const (
+	// Zero enum
 	Zero = iota
+	// One enum
 	One
+	// Two enum
 	Two
+	// Three enum
 	Three
+	// Four enum
 	Four
 )
 
+// GetShortenURL get shroten url
 /**
  *	@auther		jream.lu
  *	@intro		获取短网址链接
@@ -29,15 +35,16 @@ const (
  *	@params		url, shortenDomain string   原始url, 短网址域名
  *	@return 	string
  */
-func GetShortenUrl(url string) string {
+func GetShortenURL(url string) string {
 	//随机
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	random := r.Intn(Four)
 
-	shortenUrl := ShortenUrl(url)
-	return shortenUrl[random]
+	shortenURL := ShortenURL(url)
+	return shortenURL[random]
 }
 
+// ShortenURL shorten url
 /**
  *	@auther		jream.lu
  *	@intro		短网址算法
@@ -46,7 +53,7 @@ func GetShortenUrl(url string) string {
  *	@params		url string  原始url
  *	@return 	[]string
  */
-func ShortenUrl(url string) []string {
+func ShortenURL(url string) []string {
 	//62位的密码
 	base62 := [...]string{"a", "b", "c", "d", "e", "f", "g", "h",
 		"i", "j", "k", "l", "m", "n", "o", "p",
@@ -96,6 +103,7 @@ func ShortenUrl(url string) []string {
 	return outPut
 }
 
+// SubString substr
 /**
  *	@auther		jream.lu
  *	@intro		截取字符串长度

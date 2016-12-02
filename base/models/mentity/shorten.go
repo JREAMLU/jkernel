@@ -1,9 +1,10 @@
 package mentity
 
+// Redirect redirect entity mapping
 type Redirect struct {
 	ID          uint64 `gorm:"primary_key;column:redirect_id"`
-	LongUrl     string `gorm:"column:long_url"`
-	ShortUrl    string `gorm:"column:short_url"`
+	LongURL     string `gorm:"column:long_url"`
+	ShortURL    string `gorm:"column:short_url"`
 	LongCrc     uint64 `gorm:"column:long_crc"`
 	ShortCrc    uint64 `gorm:"column:short_crc"`
 	Status      uint8  `gorm:"column:status"`

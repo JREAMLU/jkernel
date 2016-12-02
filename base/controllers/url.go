@@ -6,10 +6,12 @@ import (
 	"github.com/JREAMLU/jkernel/base/services"
 )
 
-type UrlController struct {
+// URLController struct
+type URLController struct {
 	global.BaseController
 }
 
+// GoShorten shorten url controller
 /**
 HEADER:
 	Accept-Language: zh-CN
@@ -43,10 +45,10 @@ DATA:
  *	@Description 	入参rawMetaHeader, rawDataBody raw形式  meta以header信息传递 data以raw json形式传递
  *	@todo 			参数验证, 封装返回
  */
-func (r *UrlController) GoShorten() {
+func (r *URLController) GoShorten() {
 	data, jctx := io.InputParams(r.Ctx)
 
-	var service services.Url
+	var service services.URL
 	httpStatus, shorten := service.GoShorten(jctx, data)
 
 	r.Ctx.Output.SetStatus(httpStatus)
@@ -54,10 +56,11 @@ func (r *UrlController) GoShorten() {
 	r.ServeJSON()
 }
 
-func (r *UrlController) GoExpand() {
+// GoExpand goexpand url controller
+func (r *URLController) GoExpand() {
 	data, jctx := io.InputParams(r.Ctx)
 
-	var service services.Url
+	var service services.URL
 	httpStatus, expand := service.GoExpand(jctx, data)
 
 	r.Ctx.Output.SetStatus(httpStatus)

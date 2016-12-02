@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego"
 )
 
+// InitIP2Region init ip to region project
 func InitIP2Region() {
 	err := com.InitIP2Region(beego.AppConfig.String("ip.path"))
 	if err != nil {

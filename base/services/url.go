@@ -22,34 +22,41 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 )
 
-type Url struct {
+// URL url message struct
+type URL struct {
 	Meta struct {
 		Auth string
 	} `json:"meta" valid:"Required"`
 	Data struct {
-		Urls []interface{} `json:"urls" valid:"Required"`
+		URLs []interface{} `json:"urls" valid:"Required"`
 		IP   string        `json:"ip" valid:"IP"`
 	} `json:"data" valid:"Required"`
 }
 
-type UrlExpand struct {
+// URLExpand shorten to expand struct
+type URLExpand struct {
 	Shorten []string `json:"shorten" valid:"Required"`
 }
 
 var ip string
 
 const (
-	DELETE = 0
-	NORMAL = 1
+	// Delete delete status
+	Delete = 0
+	// Normal normal status
+	Normal = 1
 )
 
-func GetParams(url Url) Url {
+// GetParams get params
+func GetParams(url URL) URL {
 	return url
 }
 
-func (r *Url) Valid(v *validation.Validation) {}
+// Valid valid struct
+func (r *URL) Valid(v *validation.Validation) {}
 
-func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
+// GoShorten shorten url
+func (r *URL) GoShorten(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
 	ffjson.Unmarshal(data["body"].([]byte), r)
 	ip = data["headermap"].(http.Header)["X-Forwarded-For"][0]
 	ch, err := io.InputParamsCheck(jctx, data, &r.Data)
@@ -58,7 +65,7 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	if len(r.Data.Urls) > 10 {
+	if len(r.Data.URLs) > 10 {
 		beego.Info(jctx.Value("requestID").(string), ":", "goShorten error: ", err)
 		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.NUMBERLIMIT"), "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
@@ -76,7 +83,7 @@ func (r *Url) GoShorten(jctx jcontext.Context, data map[string]interface{}) (htt
 	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
 
-func shorten(r *Url) (map[string]interface{}, error) {
+func shorten(r *URL) (map[string]interface{}, error) {
 	list, err := setDB(r)
 	if err != nil {
 		return nil, err
@@ -84,9 +91,9 @@ func shorten(r *Url) (map[string]interface{}, error) {
 	return list, nil
 }
 
-func setDB(r *Url) (map[string]interface{}, error) {
+func setDB(r *URL) (map[string]interface{}, error) {
 	var shortenMap = make(map[string]interface{})
-	reply, err := mredis.ShortenHMGet(r.Data.Urls)
+	reply, err := mredis.ShortenHMGet(r.Data.URLs)
 	if err != nil {
 		return nil, err
 	}
@@ -140,24 +147,24 @@ func setDB(r *Url) (map[string]interface{}, error) {
 	return shortenMap, nil
 }
 
-func splitExistOrNot(r *Url, reply []string) (exist map[string]interface{}, notExistLongCRCList []uint64, notExistMapList []mentity.Redirect) {
+func splitExistOrNot(r *URL, reply []string) (exist map[string]interface{}, notExistLongCRCList []uint64, notExistMapList []mentity.Redirect) {
 	exist = make(map[string]interface{})
 	var redirect mentity.Redirect
-	for key, url := range r.Data.Urls {
+	for key, url := range r.Data.URLs {
 		if reply[key] != "" {
 			atom.Mu.Lock()
 			exist[url.(string)] = reply[key]
 			atom.Mu.Unlock()
 		} else {
 			longCrc := uint64(crc32.ChecksumIEEE([]byte(url.(string))))
-			shortUrl := atom.GetShortenUrl(url.(string))
-			shortCrc := uint64(crc32.ChecksumIEEE([]byte(shortUrl)))
+			shortURL := atom.GetShortenURL(url.(string))
+			shortCrc := uint64(crc32.ChecksumIEEE([]byte(shortURL)))
 			notExistLongCRCList = append(notExistLongCRCList, longCrc)
-			redirect.LongUrl = url.(string)
-			redirect.ShortUrl = shortUrl
+			redirect.LongURL = url.(string)
+			redirect.ShortURL = shortURL
 			redirect.LongCrc = longCrc
 			redirect.ShortCrc = shortCrc
-			redirect.Status = NORMAL
+			redirect.Status = Normal
 			redirect.CreatedByIP = uint64(com.Ip2Int(ip))
 			redirect.UpdateByIP = uint64(com.Ip2Int(ip))
 			redirect.CreateAT = uint64(time.Now().Unix())
@@ -172,32 +179,33 @@ func getShortenData(existShortListInDB []mentity.Redirect, notExistMapList []men
 	existQueue = make(map[string]interface{})
 	for _, existShortListInDBVal := range existShortListInDB {
 		atom.Mu.Lock()
-		existQueue[existShortListInDBVal.LongUrl] = existShortListInDBVal.ShortUrl
+		existQueue[existShortListInDBVal.LongURL] = existShortListInDBVal.ShortURL
 		atom.Mu.Unlock()
-		existQueueShortenList = append(existQueueShortenList, existShortListInDBVal.LongUrl)
-		existQueueShortenList = append(existQueueShortenList, existShortListInDBVal.ShortUrl)
-		existQueueExpandList = append(existQueueExpandList, existShortListInDBVal.ShortUrl)
-		existQueueExpandList = append(existQueueExpandList, existShortListInDBVal.LongUrl)
+		existQueueShortenList = append(existQueueShortenList, existShortListInDBVal.LongURL)
+		existQueueShortenList = append(existQueueShortenList, existShortListInDBVal.ShortURL)
+		existQueueExpandList = append(existQueueExpandList, existShortListInDBVal.ShortURL)
+		existQueueExpandList = append(existQueueExpandList, existShortListInDBVal.LongURL)
 		for k, notExistMapListVal := range notExistMapList {
-			if existShortListInDBVal.LongUrl == notExistMapListVal.LongUrl {
+			if existShortListInDBVal.LongURL == notExistMapListVal.LongURL {
 				notExistMapList = append(notExistMapList[:k], notExistMapList[k+1:]...)
 			}
 		}
 	}
 	for _, notExistMapListVal := range notExistMapList {
 		atom.Mu.Lock()
-		existQueue[notExistMapListVal.LongUrl] = notExistMapListVal.ShortUrl
+		existQueue[notExistMapListVal.LongURL] = notExistMapListVal.ShortURL
 		atom.Mu.Unlock()
-		existQueueShortenList = append(existQueueShortenList, notExistMapListVal.LongUrl)
-		existQueueShortenList = append(existQueueShortenList, notExistMapListVal.ShortUrl)
-		existQueueExpandList = append(existQueueExpandList, notExistMapListVal.ShortUrl)
-		existQueueExpandList = append(existQueueExpandList, notExistMapListVal.LongUrl)
+		existQueueShortenList = append(existQueueShortenList, notExistMapListVal.LongURL)
+		existQueueShortenList = append(existQueueShortenList, notExistMapListVal.ShortURL)
+		existQueueExpandList = append(existQueueExpandList, notExistMapListVal.ShortURL)
+		existQueueExpandList = append(existQueueExpandList, notExistMapListVal.LongURL)
 	}
 	return existQueue, existQueueShortenList, existQueueExpandList, notExistMapList
 }
 
-func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
-	var ue UrlExpand
+// GoExpand expand shorten url
+func (r *URL) GoExpand(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
+	var ue URLExpand
 	ffjson.Unmarshal([]byte(data["querystrjson"].(string)), &ue)
 
 	ch, err := io.InputParamsCheck(jctx, data, ue)
@@ -219,7 +227,7 @@ func (r *Url) GoExpand(jctx jcontext.Context, data map[string]interface{}) (http
 	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
 
-func expand(jctx jcontext.Context, ue *UrlExpand) (list map[string]interface{}, err error) {
+func expand(jctx jcontext.Context, ue *URLExpand) (list map[string]interface{}, err error) {
 	shortenList := shortenList(ue.Shorten[0])
 	expandList, err := mredis.ExpandHMGet(shortenList)
 	if err != nil {

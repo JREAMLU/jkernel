@@ -6,10 +6,12 @@ import (
 	"github.com/JREAMLU/jkernel/base/services"
 )
 
+// IPController ip struct
 type IPController struct {
 	global.BaseController
 }
 
+// Info ip info controller
 func (r *IPController) Info() {
 	data, jctx := io.InputParams(r.Ctx)
 

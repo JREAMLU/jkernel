@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego"
 )
 
+// InitRedis init redis
 func InitRedis() {
 	err := redigos.LoadRedisConfig(beego.AppConfig.String("redis.file"))
 	if err != nil {
