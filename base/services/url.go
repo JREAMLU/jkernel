@@ -165,8 +165,8 @@ func splitExistOrNot(r *URL, reply []string) (exist map[string]interface{}, notE
 			redirect.LongCrc = longCrc
 			redirect.ShortCrc = shortCrc
 			redirect.Status = Normal
-			redirect.CreatedByIP = uint64(com.Ip2Int(ip))
-			redirect.UpdateByIP = uint64(com.Ip2Int(ip))
+			redirect.CreatedByIP = uint64(com.IP2Int(ip))
+			redirect.UpdateByIP = uint64(com.IP2Int(ip))
 			redirect.CreateAT = uint64(time.Now().Unix())
 			redirect.UpdateAT = uint64(time.Now().Unix())
 			notExistMapList = append(notExistMapList, redirect)
