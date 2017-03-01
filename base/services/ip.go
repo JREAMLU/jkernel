@@ -43,3 +43,7 @@ func (r *IP) IPsInfo(jctx jcontext.Context, data map[string]interface{}) (httpSt
 
 	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
+
+func ipInfo() {
+
+}
