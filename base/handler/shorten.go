@@ -3,13 +3,11 @@ package handler
 import (
 	jcontext "context"
 	"hash/crc32"
-	"strings"
 	"time"
 
 	"github.com/JREAMLU/core/com"
 	"github.com/JREAMLU/core/db/mysql"
 	"github.com/JREAMLU/jkernel/base/atom"
-	"github.com/JREAMLU/jkernel/base/entity"
 	"github.com/JREAMLU/jkernel/base/models/mentity"
 	"github.com/JREAMLU/jkernel/base/models/mmysql"
 	"github.com/JREAMLU/jkernel/base/models/mredis"
@@ -22,8 +20,25 @@ const (
 	NORMAL = 1
 )
 
+// URLShorten url shorten
+type URLShorten struct {
+	Meta struct {
+		Auth string
+	} `json:"meta" valid:"Required"`
+	Data struct {
+		URLs []interface{} `json:"urls" valid:"Required"`
+		IP   string        `json:"ip" valid:"IP"`
+	} `json:"data" valid:"Required"`
+	FromIP string
+}
+
+// NewURLShorten return *URLShorten
+func NewURLShorten() *URLShorten {
+	return &URLShorten{}
+}
+
 // Shorten shroten handler
-func Shorten(r *entity.URLShorten) (map[string]interface{}, error) {
+func (r *URLShorten) Shorten(jctx jcontext.Context) (map[string]interface{}, error) {
 	list, err := setDB(r)
 	if err != nil {
 		return nil, err
@@ -31,18 +46,7 @@ func Shorten(r *entity.URLShorten) (map[string]interface{}, error) {
 	return list, nil
 }
 
-// Expand expand handler
-func Expand(jctx jcontext.Context, ue *entity.URLExpand) (list map[string]interface{}, err error) {
-	shortenList := shortenList(ue.Shorten[0])
-	expandList, err := mredis.ExpandHMGet(shortenList)
-	if err != nil {
-		return nil, err
-	}
-	list = getExpandData(shortenList, expandList)
-	return list, nil
-}
-
-func setDB(r *entity.URLShorten) (map[string]interface{}, error) {
+func setDB(r *URLShorten) (map[string]interface{}, error) {
 	var shortenMap = make(map[string]interface{})
 	reply, err := mredis.ShortenHMGet(r.Data.URLs)
 	if err != nil {
@@ -98,7 +102,7 @@ func setDB(r *entity.URLShorten) (map[string]interface{}, error) {
 	return shortenMap, nil
 }
 
-func splitExistOrNot(r *entity.URLShorten, reply []string) (exist map[string]interface{}, notExistLongCRCList []uint64, notExistMapList []mentity.Redirect) {
+func splitExistOrNot(r *URLShorten, reply []string) (exist map[string]interface{}, notExistLongCRCList []uint64, notExistMapList []mentity.Redirect) {
 	exist = make(map[string]interface{})
 	var redirect mentity.Redirect
 	for key, url := range r.Data.URLs {
@@ -152,23 +156,4 @@ func getShortenData(existShortListInDB []mentity.Redirect, notExistMapList []men
 		existQueueExpandList = append(existQueueExpandList, notExistMapListVal.LongURL)
 	}
 	return existQueue, existQueueShortenList, existQueueExpandList, notExistMapList
-}
-
-func shortenList(shortens string) []interface{} {
-	shortensListStr := strings.Split(shortens, ",")
-	var shortenList = make([]interface{}, len(shortensListStr))
-	for k, shroten := range shortensListStr {
-		shortenList[k] = shroten
-	}
-	return shortenList
-}
-
-func getExpandData(shortenList []interface{}, expandList []string) map[string]interface{} {
-	list := make(map[string]interface{})
-	for key, url := range expandList {
-		atom.Mu.Lock()
-		list[shortenList[key].(string)] = url
-		atom.Mu.Unlock()
-	}
-	return list
 }

@@ -48,7 +48,7 @@ DATA:
 func (r *URLController) GoShorten() {
 	data, jctx := io.InputParams(r.Ctx)
 
-	var service services.URL
+	service := services.NewURL()
 	httpStatus, shorten := service.GoShorten(jctx, data)
 
 	r.Ctx.Output.SetStatus(httpStatus)
@@ -60,7 +60,7 @@ func (r *URLController) GoShorten() {
 func (r *URLController) GoExpand() {
 	data, jctx := io.InputParams(r.Ctx)
 
-	var service services.URL
+	service := services.NewURL()
 	httpStatus, expand := service.GoExpand(jctx, data)
 
 	r.Ctx.Output.SetStatus(httpStatus)

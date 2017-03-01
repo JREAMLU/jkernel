@@ -16,7 +16,12 @@ import (
 
 // URL url message struct
 type URL struct {
-	entity.URLShorten
+	// entity.URLShorten
+}
+
+// NewURL return &url
+func NewURL() *URL {
+	return &URL{}
 }
 
 // GetParams get params
@@ -29,55 +34,61 @@ func (r *URL) Valid(v *validation.Validation) {}
 
 // GoShorten shorten url
 func (r *URL) GoShorten(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
-	ffjson.Unmarshal(data["body"].([]byte), r)
-	r.FromIP = data["headermap"].(http.Header)["X-Forwarded-For"][0]
-	ch, err := io.InputParamsCheck(jctx, data, &r.Data)
+	return shorten(jctx, data)
+}
+
+// GoExpand expand shorten url
+func (r *URL) GoExpand(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
+	return expand(jctx, data)
+}
+
+func shorten(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
+	shortenHandler := handler.NewURLShorten()
+	ffjson.Unmarshal(data["body"].([]byte), shortenHandler)
+	shortenHandler.FromIP = data["headermap"].(http.Header)["X-Forwarded-For"][0]
+	ch, err := io.InputParamsCheck(jctx, data, &shortenHandler.Data)
 	if err != nil {
 		beego.Info(jctx.Value("requestID").(string), ":", "goShorten error: ", err)
 		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	if len(r.Data.URLs) > 10 {
+	if len(shortenHandler.Data.URLs) > 10 {
 		beego.Info(jctx.Value("requestID").(string), ":", "goShorten error: ", err)
 		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.NUMBERLIMIT"), "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	var us entity.URLShorten
-	us.Data = r.Data
-	us.Meta = r.Meta
-	list, err := handler.Shorten(&us)
+	list, err := shortenHandler.Shorten(jctx)
 	if err != nil {
 		beego.Info(jctx.Value("requestID").(string), ":", "goShorten error: ", err)
 		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.SHORTENILLEGAL"), "LOGICILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	var datalist entity.DataList
+	datalist := entity.NewDataList()
 	datalist.List = list
 	datalist.Total = len(list)
 
 	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
 }
 
-// GoExpand expand shorten url
-func (r *URL) GoExpand(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
-	var ue entity.URLExpand
-	ffjson.Unmarshal([]byte(data["querystrjson"].(string)), &ue)
+func expand(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
+	expandHandler := handler.NewURLExpand()
+	ffjson.Unmarshal([]byte(data["querystrjson"].(string)), &expandHandler)
 
-	ch, err := io.InputParamsCheck(jctx, data, ue)
+	ch, err := io.InputParamsCheck(jctx, data, expandHandler)
 	if err != nil {
 		beego.Info(jctx.Value("requestID").(string), ":", "goExpand error: ", err)
 		return http.StatusExpectationFailed, io.Fail(ch.Message, "DATAPARAMSILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	list, err := handler.Expand(jctx, &ue)
+	list, err := expandHandler.Expand(jctx)
 	if err != nil {
 		beego.Info(jctx.Value("requestID").(string), ":", "goExpand error: ", err)
 		return http.StatusExpectationFailed, io.Fail(i18n.Tr(global.Lang, "url.EXPANDILLEGAL"), "LOGICILLEGAL", jctx.Value("requestID").(string))
 	}
 
-	var datalist entity.DataList
+	datalist := entity.NewDataList()
 	datalist.List = list
 	datalist.Total = len(list)
 
-	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
+	return http.StatusOK, io.Suc(datalist, ch.RequestID)
 }

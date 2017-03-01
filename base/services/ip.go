@@ -50,6 +50,6 @@ func ipInfo(jctx jcontext.Context, data map[string]interface{}) (httpStatus int,
 	datalist.List = list
 	datalist.Total = len(list)
 
-	return http.StatusCreated, io.Suc(datalist, ch.RequestID)
+	return http.StatusOK, io.Suc(datalist, ch.RequestID)
 
 }
