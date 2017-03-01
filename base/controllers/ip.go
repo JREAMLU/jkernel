@@ -15,7 +15,7 @@ type IPController struct {
 func (r *IPController) Info() {
 	data, jctx := io.InputParams(r.Ctx)
 
-	var service services.IP
+	service := services.NewIP()
 	httpStatus, shorten := service.IPsInfo(jctx, data)
 
 	r.Ctx.Output.SetStatus(httpStatus)

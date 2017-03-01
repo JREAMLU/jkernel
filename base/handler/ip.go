@@ -14,8 +14,13 @@ type IPInfo struct {
 	IPs []string `json:"ips" valid:"Required"`
 }
 
+// NewIPInfo return *IPInfo
+func NewIPInfo() *IPInfo {
+	return &IPInfo{}
+}
+
 // IPsInfo get ips info
-func IPsInfo(jctx jcontext.Context, ipInfo *IPInfo) (map[string]interface{}, error) {
+func (ipInfo *IPInfo) IPsInfo(jctx jcontext.Context) (map[string]interface{}, error) {
 	var ipList []string
 	ips := strings.Split(ipInfo.IPs[0], ",")
 	for _, ip := range ips {
