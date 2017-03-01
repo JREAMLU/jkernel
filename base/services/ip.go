@@ -2,6 +2,7 @@ package services
 
 import (
 	jcontext "context"
+	"fmt"
 	"net/http"
 
 	"github.com/JREAMLU/core/global"
@@ -45,5 +46,5 @@ func (r *IP) IPsInfo(jctx jcontext.Context, data map[string]interface{}) (httpSt
 }
 
 func ipInfo() {
-
+	fmt.Println(1)
 }
