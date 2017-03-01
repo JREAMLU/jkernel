@@ -23,7 +23,7 @@ func (r *IP) Valid(v *validation.Validation) {}
 
 // IPsInfo is list info
 func (r *IP) IPsInfo(jctx jcontext.Context, data map[string]interface{}) (httpStatus int, output io.Output) {
-	var ipInfo entity.IPInfo
+	var ipInfo handler.IPInfo
 	ffjson.Unmarshal([]byte(data["querystrjson"].(string)), &ipInfo)
 
 	ch, err := io.InputParamsCheck(jctx, data, ipInfo)

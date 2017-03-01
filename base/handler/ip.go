@@ -7,11 +7,15 @@ import (
 
 	"github.com/JREAMLU/core/com"
 	"github.com/JREAMLU/jkernel/base/atom"
-	"github.com/JREAMLU/jkernel/base/entity"
 )
 
+// IPInfo ip info struct
+type IPInfo struct {
+	IPs []string `json:"ips" valid:"Required"`
+}
+
 // IPsInfo get ips info
-func IPsInfo(jctx jcontext.Context, ipInfo *entity.IPInfo) (map[string]interface{}, error) {
+func IPsInfo(jctx jcontext.Context, ipInfo *IPInfo) (map[string]interface{}, error) {
 	var ipList []string
 	ips := strings.Split(ipInfo.IPs[0], ",")
 	for _, ip := range ips {
