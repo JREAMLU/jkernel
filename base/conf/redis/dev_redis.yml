@@ -3,11 +3,11 @@ redisConfig:
       poolSize: 50
       timeOut: 240
       connect:
-          - ip: 172.16.9.221:6391
+          - ip: 10.200.150.221:6391
             db: 0
             master: true
 
-          - ip: 172.16.9.230:6391
+          - ip: 10.200.150.230:6391
             db: 0
             master: false
 
@@ -15,11 +15,11 @@ redisConfig:
       poolSize: 50
       timeOut: 240
       connect:
-          - ip: 172.16.9.221:6391
+          - ip: 10.200.150.221:6391
             db: 0
             master: true
 
-          - ip: 172.16.9.230:6391
+          - ip: 10.200.150.230:6391
             db: 0
             master: false
 
@@ -27,10 +27,10 @@ redisConfig:
       poolSize: 50
       timeOut: 240
       connect:
-          - ip: 172.16.9.221:6391
+          - ip: 10.200.150.221:6391
             db: 0
             master: true
 
-          - ip: 172.16.9.230:6391
+          - ip: 10.200.150.230:6391
             db: 0
             master: false
