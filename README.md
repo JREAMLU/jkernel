@@ -1,2 +1,3 @@
 # jream kernel
-power by JREAM.LU
+
+- power by JREAM.LU
